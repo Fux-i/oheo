@@ -1,13 +1,23 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getT } from "@/i18n/ui";
+import { getCollection } from "@/content";
+import MomentCard from "@/components/moments/MomentCard.astro";
+import { compareMoments } from "@/components/moments/moment-parts";
 
 export function getStaticPaths() {
   return [{ params: { lang: "en" } }, { params: { lang: "zh" } }];
 }
-const { t } = getT(Astro.currentLocale);
+const { lang, t } = getT(Astro.currentLocale);
+const moments = getCollection("moments", lang).sort(compareMoments);
 ---
 
 <Layout title={t("nav.moments") + t("site.title_suffix")} desc="">
-  <h1>{t("nav.moments")}</h1>
+  <main class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+    <moment-feed
+      class="relative flex flex-col gap-6 before:absolute before:inset-y-0 before:left-4 before:w-px before:bg-gray-200 before:content-[''] dark:before:bg-gray-700 sm:before:left-[7rem]"
+    >
+      {moments.map((item) => <MomentCard item={item} />)}
+    </moment-feed>
+  </main>
 </Layout>

@@ -32,6 +32,13 @@ export const CONTENT = {
       en: /^blog\/.*\.en\.md$/,
     },
   },
+  moments: {
+    type: "collection",
+    source: {
+      zh: /^diary\/.*(?<!\.en)\.md$/,
+      en: /^diary\/.*\.en\.md$/,
+    },
+  },
 } as const satisfies Record<string, ContentEntry>;
 
 export type PageKey = keyof typeof CONTENT;
