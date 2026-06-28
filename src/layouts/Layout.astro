@@ -1,8 +1,10 @@
 ---
 import BaseHead from "@/components/common/BaseHead.astro";
 import Header from "@/components/common/Header.astro";
+import ImageViewer from "@/components/common/ImageViewer.astro";
 import ThemeScript from "@/components/common/ThemeScript.astro";
 import Footer from "@/components/common/Footer.astro";
+import { getT } from "@/i18n/ui";
 
 interface Props {
   title: string;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 let { title, desc, image = undefined } = Astro.props;
+const { t } = getT(Astro.currentLocale);
 ---
 
 <!doctype html>
@@ -22,6 +25,15 @@ let { title, desc, image = undefined } = Astro.props;
   <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 pt-16">
     <Header />
     <slot />
+    <ImageViewer
+      labels={{
+        close: t("viewer.close"),
+        zoom: t("viewer.zoom"),
+        previous: t("viewer.previous"),
+        next: t("viewer.next"),
+        error: t("viewer.error"),
+      }}
+    />
     <Footer />
   </body>
 </html>

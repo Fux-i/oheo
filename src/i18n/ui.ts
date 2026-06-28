@@ -32,6 +32,11 @@ export const ui = {
     'article.published_at': 'Published at',
     'article.updated_at': 'Updated at',
     'btn.outline': 'Outline',
+    'viewer.close': 'Close',
+    'viewer.zoom': 'Zoom',
+    'viewer.previous': 'Previous image',
+    'viewer.next': 'Next image',
+    'viewer.error': 'The image could not be loaded',
   },
   zh: {
     'site.title': '伏羲的博客',
@@ -55,6 +60,11 @@ export const ui = {
     'article.published_at': '发布于',
     'article.updated_at': '编辑于',
     'btn.outline': '大纲',
+    'viewer.close': '关闭',
+    'viewer.zoom': '缩放',
+    'viewer.previous': '上一张图片',
+    'viewer.next': '下一张图片',
+    'viewer.error': '图片加载失败',
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 

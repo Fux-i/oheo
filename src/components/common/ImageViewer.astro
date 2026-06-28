@@ -1,0 +1,89 @@
+---
+interface Props {
+  rootSelector?: string;
+  contentSelector?: string;
+  wheelToZoom?: boolean;
+  loop?: boolean;
+  bgOpacity?: number;
+  labels: {
+    close: string;
+    zoom: string;
+    previous: string;
+    next: string;
+    error: string;
+  };
+}
+
+const {
+  rootSelector = "body",
+  contentSelector = ".article",
+  wheelToZoom = true,
+  loop = false,
+  bgOpacity = 0.92,
+  labels,
+} = Astro.props;
+---
+
+<image-viewer
+  data-root-selector={rootSelector}
+  data-content-selector={contentSelector}
+  data-wheel-to-zoom={String(wheelToZoom)}
+  data-loop={String(loop)}
+  data-bg-opacity={String(bgOpacity)}
+  data-close-title={labels.close}
+  data-zoom-title={labels.zoom}
+  data-arrow-prev-title={labels.previous}
+  data-arrow-next-title={labels.next}
+  data-error-msg={labels.error}
+  hidden
+>
+</image-viewer>
+
+<style is:global>
+  .image-viewer-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+    max-width: 100%;
+    margin-block: 0.75rem;
+  }
+
+  .image-viewer-row[data-image-count="2"],
+  .image-viewer-row[data-image-count="3"],
+  .image-viewer-row[data-image-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 8rem));
+  }
+
+  .image-viewer-row[data-image-count="3"],
+  .image-viewer-row[data-image-count="4"] {
+    max-width: 16.25rem;
+  }
+
+  .image-viewer-row[data-image-count="5"],
+  .image-viewer-row[data-image-count="6"],
+  .image-viewer-row[data-image-count="7"],
+  .image-viewer-row[data-image-count="8"],
+  .image-viewer-row[data-image-count="9"] {
+    grid-template-columns: repeat(3, minmax(0, 7rem));
+    max-width: 21.5rem;
+  }
+
+  .image-viewer-row a {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    line-height: 0;
+    cursor: zoom-in;
+  }
+
+  .image-viewer-row[data-image-count]:not([data-image-count="1"]) img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+</style>
+
+<script>
+  import "./image-viewer";
+</script>
