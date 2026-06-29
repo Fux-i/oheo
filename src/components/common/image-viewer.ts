@@ -1,5 +1,6 @@
 import PhotoSwipeLightbox from "photoswipe/lightbox";
 import "photoswipe/style.css";
+import type PhotoSwipe from "photoswipe";
 
 type ViewerElement = HTMLElement & {
   dataset: {
@@ -17,6 +18,31 @@ type ViewerElement = HTMLElement & {
 };
 
 const enhancedRows = new WeakSet<HTMLElement>();
+
+function getCurrentCaption(pswp: PhotoSwipe): string {
+  const alt = pswp.currSlide?.data.alt;
+  return typeof alt === "string" ? alt.trim() : "";
+}
+
+function registerCaption(lightbox: PhotoSwipeLightbox): void {
+  lightbox.on("uiRegister", () => {
+    lightbox.pswp?.ui?.registerElement({
+      name: "caption",
+      className: "pswp__custom-caption",
+      appendTo: "root",
+      order: 9,
+      onInit: (caption, pswp) => {
+        const updateCaption = () => {
+          caption.textContent = getCurrentCaption(pswp);
+          caption.hidden = !caption.textContent;
+        };
+
+        updateCaption();
+        pswp.on("change", updateCaption);
+      },
+    });
+  });
+}
 
 function isImageOnlyParagraph(paragraph: HTMLParagraphElement): boolean {
   return Array.from(paragraph.childNodes).every((node) => {
@@ -97,6 +123,7 @@ function initImageViewer(viewer: ViewerElement): void {
         errorMsg: viewer.dataset.errorMsg,
       });
 
+      registerCaption(lightbox);
       lightbox.init();
     });
 }
