@@ -6,6 +6,7 @@ import expressiveCode from 'astro-expressive-code';
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
 import rehypeHeadingAnchors from './src/markdown/rehype-heading-anchors';
 import rehypeFootnoteAnchors from './src/markdown/rehype-footnote-anchors';
+import rehypeVideoSrc from './src/markdown/rehype-video-src';
 
 // https://astro.build/config
 export default defineConfig({
@@ -31,7 +32,7 @@ export default defineConfig({
 
   markdown: {
     remarkPlugins: ['remark-math'],
-    rehypePlugins: ['rehype-katex', rehypeHeadingAnchors, rehypeFootnoteAnchors],
+    rehypePlugins: ['rehype-katex', rehypeHeadingAnchors, rehypeFootnoteAnchors, rehypeVideoSrc],
   },
 
   integrations: [
