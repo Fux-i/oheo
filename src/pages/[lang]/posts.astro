@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Article from "@/components/posts/Article.astro";
+import { comparePosts } from "@/components/posts/post-parts";
 import { getT } from "@/i18n/ui";
 import { getCollection } from "@/content";
 
@@ -8,7 +9,7 @@ export function getStaticPaths() {
   return [{ params: { lang: "en" } }, { params: { lang: "zh" } }];
 }
 const { lang, t } = getT(Astro.currentLocale);
-const posts = getCollection("posts", lang);
+const posts = getCollection("posts", lang).sort(comparePosts);
 ---
 
 <Layout title={t("nav.posts") + t("site.title_suffix")} desc="">
