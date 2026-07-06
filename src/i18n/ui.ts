@@ -39,8 +39,8 @@ export const ui = {
     'viewer.error': 'The image could not be loaded',
   },
   zh: {
-    'site.title': '伏羲的博客',
-    'site.title_suffix': ' | 伏羲的博客',
+    'site.title': "Fuxi's Blog",
+    'site.title_suffix': " | Fuxi's Blog",
     'nav.moments': '动态',
     'nav.posts': '文章',
     'nav.archives': '归档',
