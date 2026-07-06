@@ -1,0 +1,54 @@
+---
+import BaseHead from "@/components/common/BaseHead.astro";
+import Header from "@/components/common/Header.astro";
+import ImageViewer from "@/components/common/ImageViewer.astro";
+import ThemeScript from "@/components/common/ThemeScript.astro";
+import Footer from "@/components/common/Footer.astro";
+import { getT } from "@/i18n/ui";
+
+interface Props {
+  title: string;
+  desc: string;
+  image?: ImageMetadata;
+}
+
+let { title, desc, image = undefined } = Astro.props;
+const { t } = getT(Astro.currentLocale);
+---
+
+<!doctype html>
+<html lang={Astro.currentLocale ?? "en"}>
+  <head>
+    <BaseHead title={title} desc={desc} image={image} />
+    <ThemeScript />
+  </head>
+  <body class="h-svh overflow-hidden bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <background-layer
+      class="fixed inset-0 z-0 block bg-[radial-gradient(circle_at_50%_36%,rgba(125,211,252,0.18),transparent_34%),linear-gradient(180deg,#ffffff_0%,#f8fafc_58%,#eef2ff_100%)] dark:bg-[radial-gradient(circle_at_50%_36%,rgba(124,58,237,0.18),transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_58%,#111827_100%)]"
+    >
+    </background-layer>
+    <Header isHome={true} />
+    <page-shell class="relative z-10 flex h-svh flex-col pt-16">
+      <slot />
+      <ImageViewer
+        labels={{
+          close: t("viewer.close"),
+          zoom: t("viewer.zoom"),
+          previous: t("viewer.previous"),
+          next: t("viewer.next"),
+          error: t("viewer.error"),
+        }}
+      />
+      <Footer isHome={true} />
+    </page-shell>
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>

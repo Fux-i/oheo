@@ -1,0 +1,97 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { getCollection } from "@/content";
+import { getT } from "@/i18n/ui";
+import Starfield from "@/components/home/Starfield.astro";
+
+const { lang, t } = getT(Astro.currentLocale);
+const posts = getCollection("posts", lang);
+const moments = getCollection("moments", lang);
+const formatter = new Intl.NumberFormat(lang === "zh" ? "zh-CN" : "en");
+
+const stats = [
+  {
+    label: t("home.stats.posts"),
+    value: formatter.format(posts.length),
+  },
+  {
+    label: t("home.stats.moments"),
+    value: formatter.format(moments.length),
+  },
+];
+---
+
+<main class="relative isolate min-h-0 flex-1 overflow-hidden">
+  <Starfield />
+
+  <home-hero
+    class="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-8 text-center sm:px-8"
+  >
+    <h1
+      class="max-w-4xl bg-linear-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-4xl font-bold leading-tight text-transparent sm:text-7xl"
+    >
+      {t("home.title")}
+    </h1>
+
+    <stats-list
+      class="mt-8 grid w-full max-w-sm grid-cols-2 gap-3 sm:gap-4"
+      aria-label={t("home.stats.label")}
+    >
+      {
+        stats.map((item) => (
+          <stat-card class="group relative overflow-hidden rounded-lg border border-white/60 bg-white/60 p-3 text-center shadow-sm backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-purple-300 hover:bg-white/75 dark:border-gray-700/50 dark:bg-gray-800/60 dark:hover:border-purple-500 dark:hover:bg-gray-800/75 sm:p-4">
+            <strong class="relative z-10 block text-lg font-semibold  sm:text-xl">
+              {item.value}
+            </strong>
+            <span class="relative z-10 mt-1 block truncate text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
+              {item.label}
+            </span>
+          </stat-card>
+        ))
+      }
+    </stats-list>
+
+    <a
+      href={getRelativeLocaleUrl(lang, "posts")}
+      class="mt-8 inline-flex items-center gap-2 rounded-lg bg-purple-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-purple-500/20 transition hover:-translate-y-0.5 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-white dark:bg-purple-600 dark:shadow-purple-950/40 dark:hover:bg-purple-500 dark:focus:ring-offset-gray-950"
+    >
+      {t("home.cta")}
+    </a>
+  </home-hero>
+</main>
+
+<style>
+  h1,
+  stats-list,
+  a {
+    animation: fade-in-up 0.9s ease-out both;
+  }
+
+  stats-list {
+    animation-delay: 0.12s;
+  }
+
+  a {
+    animation-delay: 0.22s;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(1.875rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    h1,
+    stats-list,
+    a {
+      animation: none;
+    }
+  }
+</style>

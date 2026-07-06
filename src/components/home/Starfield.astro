@@ -1,0 +1,169 @@
+---
+interface Props {
+  count?: number;
+  speed?: number;
+  lightColor?: string;
+  darkColor?: string;
+}
+
+const {
+  count = 100,
+  speed = 0.002,
+  lightColor = "59, 130, 246",
+  darkColor = "255, 255, 255",
+} = Astro.props;
+---
+
+<starfield-layer
+  class="pointer-events-none fixed inset-0 z-0 block overflow-hidden"
+  data-starfield
+  data-count={count}
+  data-speed={speed}
+  data-light-color={lightColor}
+  data-dark-color={darkColor}
+  aria-hidden="true"
+>
+  <canvas class="absolute inset-0 size-full" data-starfield-canvas></canvas>
+</starfield-layer>
+
+<script>
+  type StarfieldLayer = HTMLElement & {
+    dataset: DOMStringMap & {
+      count?: string;
+      speed?: string;
+      lightColor?: string;
+      darkColor?: string;
+      mounted?: string;
+    };
+  };
+
+  class Star {
+    private x = 0;
+    private y = 0;
+    private z = 0;
+
+    constructor(
+      private getSize: () => { width: number; height: number },
+      private speed: number,
+    ) {
+      this.reset();
+    }
+
+    reset() {
+      const { width, height } = this.getSize();
+      this.x = width * (0.2 + 0.6 * Math.random());
+      this.y = height * (0.2 + 0.6 * Math.random());
+      this.z = this.focalDistance * Math.random();
+    }
+
+    private get focalDistance() {
+      return this.getSize().width * 0.4;
+    }
+
+    update() {
+      this.z -= this.focalDistance * this.speed;
+      if (this.z <= 0) this.reset();
+    }
+
+    draw(ctx: CanvasRenderingContext2D, color: string) {
+      const { width, height } = this.getSize();
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const distance = this.focalDistance;
+      const starX = (this.x - centerX) * (distance / this.z) + centerX;
+      const starY = (this.y - centerY) * (distance / this.z) + centerY;
+
+      if (
+        this.z <= 0 ||
+        this.z > distance ||
+        starX < -20 ||
+        starX > width + 20 ||
+        starY < -20 ||
+        starY > height + 20
+      ) {
+        return;
+      }
+
+      const radius = 0.72 * (distance / this.z);
+      const opacity = 1 - 0.8 * (this.z / distance);
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = `rgba(${color}, ${opacity})`;
+      ctx.beginPath();
+      ctx.arc(starX, starY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  const setupStarfield = (layer: StarfieldLayer) => {
+    if (layer.dataset.mounted === "true") return;
+    layer.dataset.mounted = "true";
+
+    const canvas = layer.querySelector<HTMLCanvasElement>(
+      "[data-starfield-canvas]",
+    );
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const count = Number(layer.dataset.count ?? 100);
+    const speed = Number(layer.dataset.speed ?? 0.002);
+    const lightColor = layer.dataset.lightColor ?? "59, 130, 246";
+    const darkColor = layer.dataset.darkColor ?? "255, 255, 255";
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let width = 0;
+    let height = 0;
+    let stars: Star[] = [];
+    let frameId = 0;
+
+    const isDark = () => document.documentElement.dataset.theme === "dark";
+    const getSize = () => ({ width, height });
+
+    const setCanvasSize = () => {
+      const rect = layer.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.max(1, rect.width);
+      height = Math.max(1, rect.height);
+      canvas.width = Math.max(1, Math.floor(width * dpr));
+      canvas.height = Math.max(1, Math.floor(height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      const color = isDark() ? darkColor : lightColor;
+      for (const star of stars) {
+        if (!motion.matches) star.update();
+        star.draw(ctx, color);
+      }
+    };
+
+    const animate = () => {
+      draw();
+      frameId = window.requestAnimationFrame(animate);
+    };
+
+    const reset = () => {
+      window.cancelAnimationFrame(frameId);
+      setCanvasSize();
+      stars = Array.from({ length: count }, () => new Star(getSize, speed));
+      if (motion.matches) draw();
+      else animate();
+    };
+
+    const themeObserver = new MutationObserver(draw);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    window.addEventListener("resize", reset, { passive: true });
+    motion.addEventListener("change", reset);
+    reset();
+  };
+
+  document
+    .querySelectorAll<StarfieldLayer>("[data-starfield]")
+    .forEach(setupStarfield);
+</script>

@@ -1,6 +1,6 @@
 ---
-import Welcome from "@/components/Welcome.astro";
-import Layout from "@/layouts/Layout.astro";
+import HomePage from "@/components/home/HomePage.astro";
+import HomeLayout from "@/layouts/HomeLayout.astro";
 import { getT } from "@/i18n/ui";
 
 export function getStaticPaths() {
@@ -9,6 +9,6 @@ export function getStaticPaths() {
 const { t } = getT(Astro.currentLocale);
 ---
 
-<Layout title={t("site.title")} desc="">
-  <Welcome />
-</Layout>
+<HomeLayout title={t("site.title")} desc="">
+  <HomePage />
+</HomeLayout>
