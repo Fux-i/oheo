@@ -81,10 +81,8 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
   </article>
   <sticky-rail
     class:list={[
-      "sticky-rail absolute inset-y-0 -right-4 z-20 w-0 transition-opacity duration-300",
-      exclusive
-        ? "pointer-events-auto opacity-100"
-        : "pointer-events-none opacity-0",
+      "sticky-rail pointer-events-none absolute inset-y-0 -right-4 z-20 w-0 transition-opacity duration-300",
+      exclusive ? "opacity-100" : "opacity-0",
     ]}
   >
     <div class="sticky top-20 flex gap-2">
@@ -130,7 +128,6 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
   }
   .expanded .sticky-rail {
     opacity: 1;
-    pointer-events: auto;
   }
   :global(html),
   :global(body) {
@@ -154,6 +151,11 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
   .outline-inset .collapse-btn {
     right: 3.25rem;
     left: auto;
+  }
+  .sticky-rail :global(.outline-toggle),
+  .sticky-rail :global(.outline-nav),
+  .sticky-rail .collapse-btn {
+    pointer-events: auto;
   }
   .expanded {
     a.title-a {
