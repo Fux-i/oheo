@@ -2,34 +2,54 @@
 import Layout from "@/layouts/Layout.astro";
 import { getT } from "@/i18n/ui";
 import { getSingle } from "@/content";
+import FriendCard from "@/components/friends/FriendCard.astro";
+import { type Friend } from "@/components/friends/friend-parts";
 
 export function getStaticPaths() {
   return [{ params: { lang: "en" } }, { params: { lang: "zh" } }];
 }
 const { lang, t } = getT(Astro.currentLocale);
 const doc = getSingle("friends", lang);
-const friends = (doc?.frontmatter.friends ?? []) as Array<{
-  name: string;
-  tag: string;
-  url: string;
-  motto: string;
-  avatar: string;
-}>;
+const friends = (doc?.frontmatter.friends ?? []) as Friend[];
 ---
 
-<Layout title={t("nav.friends") + t("site.title_suffix")} desc="">
-  <h1>{t("nav.friends")}</h1>
-  <ul>
-    {
-      friends.map((f) => (
-        <li>
-          <a href={f.url} target="_blank" rel="noopener noreferrer">
-            {f.name}
-          </a>
-          {f.tag && <span> — {f.tag}</span>}
-          {f.motto && <p>{f.motto}</p>}
-        </li>
-      ))
-    }
-  </ul>
+<Layout
+  title={t("nav.friends") + t("site.title_suffix")}
+  desc={doc?.frontmatter.desc ?? ""}
+>
+  <main class="mx-auto flex w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
+    <section aria-labelledby="friends-title" class="w-full space-y-6">
+      <friends-header class="block">
+        {
+          doc && (
+            <friends-intro class="article mt-4 block max-w-3xl text-gray-600 dark:text-gray-300">
+              <doc.Content />
+            </friends-intro>
+          )
+        }
+      </friends-header>
+
+      {
+        friends.length > 0 ? (
+          <friends-grid class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {friends.map((friend) => (
+              <FriendCard friend={friend} />
+            ))}
+          </friends-grid>
+        ) : (
+          <p class="rounded-lg border border-gray-200 bg-white p-5 text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            {t("friends.empty")}
+          </p>
+        )
+      }
+    </section>
+  </main>
 </Layout>
+
+<style>
+  :global(body) {
+    display: flex;
+    min-height: 100svh;
+    flex-direction: column;
+  }
+</style>

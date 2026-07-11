@@ -1,0 +1,124 @@
+---
+import { type Friend } from "@/components/friends/friend-parts";
+
+interface Props {
+  friend: Friend;
+}
+
+const { friend } = Astro.props;
+---
+
+<friend-card class="group block h-full">
+  <a
+    href={friend.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="friend-card-link relative flex h-full min-h-30 cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-offset-gray-900"
+  >
+    <friend-body class="relative z-10 flex min-w-0 flex-1 flex-col gap-4 p-5">
+      <friend-header class="flex min-w-0 items-start gap-4">
+        <friend-avatar
+          class="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 text-lg font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+        >
+          <span class="absolute inset-0 grid place-items-center"
+            >{friend.name[0]}</span
+          >
+          {
+            friend.avatar && (
+              <img
+                data-friend-avatar
+                src={friend.avatar}
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                class="relative z-10 size-full bg-gray-100 object-cover transition duration-300 group-hover:scale-105 dark:bg-gray-900"
+              />
+            )
+          }
+        </friend-avatar>
+
+        <friend-title class="block min-w-0 flex-1">
+          <h2
+            class="truncate text-lg font-semibold text-gray-950 dark:text-gray-50"
+          >
+            {friend.name}
+          </h2>
+          {
+            friend.tag && (
+              <p class="mt-1 inline-flex max-w-full rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
+                <span class="truncate">{friend.tag}</span>
+              </p>
+            )
+          }
+        </friend-title>
+      </friend-header>
+
+      {
+        friend.motto && (
+          <friend-motto class="block min-w-0 flex-1 text-sm leading-6 text-gray-600 dark:text-gray-300">
+            <p class="wrap-break-word">{friend.motto}</p>
+          </friend-motto>
+        )
+      }
+    </friend-body>
+  </a>
+</friend-card>
+
+<script>
+  const markFailedAvatar = (avatar: HTMLImageElement) => {
+    avatar.dataset.failed = "true";
+  };
+  const markLoadedAvatar = (avatar: HTMLImageElement) => {
+    avatar.dataset.loaded = "true";
+  };
+
+  document
+    .querySelectorAll<HTMLImageElement>("[data-friend-avatar]")
+    .forEach((avatar) => {
+      if (avatar.complete) {
+        if (avatar.naturalWidth > 0) markLoadedAvatar(avatar);
+        else markFailedAvatar(avatar);
+      }
+      avatar.addEventListener("load", () => markLoadedAvatar(avatar));
+      avatar.addEventListener("error", () => markFailedAvatar(avatar));
+    });
+</script>
+
+<style>
+  .friend-card-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, currentColor 8%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, currentColor 8%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 1.25rem 1.25rem;
+  }
+
+  .friend-card-link:hover::before {
+    opacity: 1;
+  }
+
+  [data-friend-avatar] {
+    opacity: 0;
+  }
+
+  [data-friend-avatar][data-loaded="true"] {
+    opacity: 1;
+  }
+
+  [data-friend-avatar][data-failed="true"] {
+    display: none;
+  }
+</style>

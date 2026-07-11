@@ -42,6 +42,7 @@ export const ui = {
     'viewer.previous': 'Previous image',
     'viewer.next': 'Next image',
     'viewer.error': 'The image could not be loaded',
+    'friends.empty': 'No friend for now'
   },
   zh: {
     'site.title': "Fuxi's Blog",
@@ -75,6 +76,7 @@ export const ui = {
     'viewer.previous': '上一张图片',
     'viewer.next': '下一张图片',
     'viewer.error': '图片加载失败',
+    'friends.empty': '暂时还没有友链哦'
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 
