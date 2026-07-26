@@ -45,6 +45,12 @@
   & :where(a):not(.no-article *) {
     text-decoration: underline;
     text-underline-offset: 0.2em;
+
+    &[href^="http://"]::after,
+    &[href^="https://"]::after {
+      content: "↗";
+      font-size: 0.8em;
+    }
   }
 
   & :where(strong):not(.no-article *) {
