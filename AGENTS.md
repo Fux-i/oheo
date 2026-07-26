@@ -19,7 +19,7 @@ Everything should be **highly customizable**. Users may want to change almost an
 
 Search is out of scope for now.
 
-Do not start the dev server. I run it myself; you can verify at `localhost:4444`.
+Do not start the dev server. I run it myself; you can verify at `localhost:4500`.
 
 ## Coding
 

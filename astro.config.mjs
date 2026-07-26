@@ -10,7 +10,7 @@ import rehypeVideoSrc from './src/markdown/rehype-video-src';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://fuxi.com',
+  site: 'https://fuxi.host',
   server: {
     port: 4444,
     open: true

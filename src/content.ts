@@ -155,7 +155,7 @@ export function getCollection(
 
   return entries
     .filter((e) => pattern.test(e.path))
-    .filter((e) => e.mod.frontmatter?.draft !== true)
+    .filter((e) => e.mod.frontmatter?.draft !== true && e.mod.frontmatter?.show !== false)
     .map((e) => {
       const frontmatter = normalizeFrontmatter(pageKey, e.mod.frontmatter);
 
