@@ -1,5 +1,5 @@
 ---
-import IconOutline from "@/assets/icons/iconOutline.svg";
+import { Icon } from "astro-icon/components";
 import { getT } from "@/i18n/ui";
 import type { MarkdownHeading } from "@/content";
 import { buildOutlineItems } from "./outline-items";
@@ -20,7 +20,7 @@ const items = buildOutlineItems(toc);
     aria-expanded="true"
     class="outline-toggle grid place-items-center size-10 rounded-full bg-(--article-bg) shadow cursor-pointer hover:brightness-90"
   >
-    <IconOutline class="size-4" />
+    <Icon name="tabler:list-tree" class="size-4" />
   </button>
 
   {

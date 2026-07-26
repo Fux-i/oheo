@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import expressiveCode from 'astro-expressive-code';
+import icon from 'astro-icon';
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
 import rehypeHeadingAnchors from './src/markdown/rehype-heading-anchors';
 import rehypeFootnoteAnchors from './src/markdown/rehype-footnote-anchors';
@@ -36,6 +37,7 @@ export default defineConfig({
   },
 
   integrations: [
+    icon(),
     expressiveCode({
       themes: ['one-light', 'one-dark-pro'],
       themeCssSelector: (theme) => `[data-theme="${theme.type}"]`,

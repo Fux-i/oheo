@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconI18n from "@/assets/icons/IconI18n.svg";
+import { Icon } from "astro-icon/components";
 import { getT, type Lang } from "@/i18n/ui";
 
 interface Props {
@@ -31,5 +31,5 @@ const iconBtn =
 ---
 
 <a href={targetHref} title={title} class={iconBtn}>
-  <IconI18n class={isMobile ? "size-7" : "size-5"} />
+  <Icon name="tabler:language" class={isMobile ? "size-7" : "size-5"} />
 </a>

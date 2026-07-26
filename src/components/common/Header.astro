@@ -1,11 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconX from "@/assets/icons/IconX.svg";
-import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
-import IconMoon from "@/assets/icons/IconMoon.svg";
-import IconSearch from "@/assets/icons/IconSearch.svg";
-import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
-import IconComputer from "@/assets/icons/IconComputer.svg";
+import { Icon } from "astro-icon/components";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
 import LangSwitch from "@/components/common/LangSwitch.astro";
@@ -76,7 +71,7 @@ const iconBtn =
 
     <tool-bar class="flex items-center gap-1">
       <button type="button" title={t("btn.search")} class={iconBtn}>
-        <IconSearch class="size-5" />
+        <Icon name="tabler:search" class="size-5" />
       </button>
       <button
         type="button"
@@ -84,9 +79,13 @@ const iconBtn =
         class:list={[iconBtn, "theme-toggle"]}
         data-pref="system"
       >
-        <IconSunHigh class="size-5" data-icon="light" />
-        <IconMoon class="size-5" data-icon="dark" />
-        <IconComputer class="size-5" data-icon="system" />
+        <Icon name="tabler:sun-high" class="size-5" data-theme-icon="light" />
+        <Icon name="tabler:moon" class="size-5" data-theme-icon="dark" />
+        <Icon
+          name="tabler:device-desktop"
+          class="size-5"
+          data-theme-icon="system"
+        />
       </button>
       <LangSwitch isMobile={false} />
     </tool-bar>
@@ -96,7 +95,7 @@ const iconBtn =
       {
         socials.map((s) => (
           <a href={s.href} title={t(s.key)} class={iconBtn} target="_blank">
-            <s.icon class="size-5" />
+            <Icon name={s.icon} class="size-5" />
           </a>
         ))
       }
@@ -113,7 +112,7 @@ const iconBtn =
         aria-expanded="false"
         class:list={[iconBtn, "absolute inset-0"]}
       >
-        <IconMenuDeep class="size-7" />
+        <Icon name="tabler:menu-deep" class="size-7" />
       </button>
       <button
         type="button"
@@ -122,7 +121,7 @@ const iconBtn =
         aria-controls="mobile-menu"
         class:list={[iconBtn, "absolute inset-0"]}
       >
-        <IconX class="size-7" />
+        <Icon name="tabler:x" class="size-7" />
       </button>
     </toggle-btn>
 
@@ -148,7 +147,7 @@ const iconBtn =
           title={t("btn.search")}
           class:list={[iconBtn, "size-10"]}
         >
-          <IconSearch class="size-7" />
+          <Icon name="tabler:search" class="size-7" />
         </button>
         <button
           type="button"
@@ -156,9 +155,13 @@ const iconBtn =
           class:list={[iconBtn, "theme-toggle size-10"]}
           data-pref="system"
         >
-          <IconSunHigh class="size-7" data-icon="light" />
-          <IconMoon class="size-7" data-icon="dark" />
-          <IconComputer class="size-7" data-icon="system" />
+          <Icon name="tabler:sun-high" class="size-7" data-theme-icon="light" />
+          <Icon name="tabler:moon" class="size-7" data-theme-icon="dark" />
+          <Icon
+            name="tabler:device-desktop"
+            class="size-7"
+            data-theme-icon="system"
+          />
         </button>
         <LangSwitch isMobile={true} />
       </tool-bar>
@@ -171,7 +174,7 @@ const iconBtn =
               class:list={[iconBtn, "size-10"]}
               target="_blank"
             >
-              <s.icon class="size-7" />
+              <Icon name={s.icon} class="size-7" />
             </a>
           ))
         }
@@ -280,15 +283,15 @@ const iconBtn =
   }
 
   /* Stack icons and animate the active one in */
-  .theme-toggle [data-icon] {
+  .theme-toggle [data-theme-icon] {
     position: absolute;
     scale: 0;
     rotate: -90deg;
     transition: all 0.3s ease;
   }
-  .theme-toggle[data-pref="light"] [data-icon="light"],
-  .theme-toggle[data-pref="dark"] [data-icon="dark"],
-  .theme-toggle[data-pref="system"] [data-icon="system"] {
+  .theme-toggle[data-pref="light"] [data-theme-icon="light"],
+  .theme-toggle[data-pref="dark"] [data-theme-icon="dark"],
+  .theme-toggle[data-pref="system"] [data-theme-icon="system"] {
     scale: 1;
     rotate: 0deg;
   }

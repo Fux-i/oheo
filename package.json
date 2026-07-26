@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@expressive-code/plugin-line-numbers": "^0.42.0",
+    "@iconify-json/tabler": "^1.2.37",
     "@tailwindcss/vite": "^4.2.4",
     "astro": "^6.2.1",
     "astro-expressive-code": "^0.42.0",
+    "astro-icon": "^1.1.5",
     "photoswipe": "^5.4.4",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
