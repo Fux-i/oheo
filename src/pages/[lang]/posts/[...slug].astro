@@ -1,8 +1,9 @@
 ---
+import { getRelativeLocaleUrl } from "astro:i18n";
 import Layout from "@/layouts/Layout.astro";
 import Article from "@/components/posts/Article.astro";
 import { getCollection, type CollectionItem } from "@/content";
-import type { Lang } from "@/i18n/ui";
+import { getT, type Lang } from "@/i18n/ui";
 
 export function getStaticPaths() {
   const langs: Lang[] = ["en", "zh"];
@@ -16,8 +17,13 @@ export function getStaticPaths() {
 
 const { item } = Astro.props as { item: CollectionItem };
 const { frontmatter } = item;
+const { lang } = getT(Astro.currentLocale);
 ---
 
-<Layout title={frontmatter.title ?? item.slug} desc={frontmatter.desc ?? ""}>
+<Layout
+  title={frontmatter.title ?? item.slug}
+  desc={frontmatter.desc ?? ""}
+  backHref={getRelativeLocaleUrl(lang, "posts")}
+>
   <Article item={item} exclusive={true} />
 </Layout>

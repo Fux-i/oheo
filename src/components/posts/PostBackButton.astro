@@ -1,0 +1,24 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  href: string;
+  label: string;
+}
+
+const { href, label } = Astro.props;
+---
+
+<a
+  href={href}
+  data-post-back
+  title={label}
+  aria-label={label}
+  class="inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-gray-700"
+>
+  <Icon name="tabler:arrow-left" class="size-5" />
+</a>
+
+<script>
+  import "./post-back-button";
+</script>

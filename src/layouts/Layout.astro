@@ -10,9 +10,10 @@ interface Props {
   title: string;
   desc: string;
   image?: ImageMetadata;
+  backHref?: string;
 }
 
-let { title, desc, image = undefined } = Astro.props;
+let { title, desc, image = undefined, backHref } = Astro.props;
 const { t } = getT(Astro.currentLocale);
 ---
 
@@ -23,7 +24,7 @@ const { t } = getT(Astro.currentLocale);
     <ThemeScript />
   </head>
   <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 pt-16">
-    <Header />
+    <Header backHref={backHref} />
     <slot />
     <ImageViewer
       labels={{

@@ -4,12 +4,14 @@ import { Icon } from "astro-icon/components";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
 import LangSwitch from "@/components/common/LangSwitch.astro";
+import PostBackButton from "@/components/posts/PostBackButton.astro";
 
 interface Props {
   isHome?: boolean;
+  backHref?: string;
 }
 
-const { isHome = false } = Astro.props;
+const { isHome = false, backHref } = Astro.props;
 const { lang, t } = getT(Astro.currentLocale);
 
 const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
@@ -43,6 +45,7 @@ const iconBtn =
     id="header-container"
     class:list={[page_width, "relative flex mx-auto h-16 items-center"]}
   >
+    {backHref && <PostBackButton href={backHref} label={t("btn.back")} />}
     <a
       href={getRelativeLocaleUrl(lang, "")}
       id="title"
