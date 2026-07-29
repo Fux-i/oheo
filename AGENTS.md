@@ -17,7 +17,7 @@ Always call me "Fuxi".
 - Add comments only when critical, and write them in English.
 - Search is out of scope unless I explicitly bring it back into scope.
 - Do not start the dev server. I run it myself at `http://localhost:4500`; you may inspect that running instance for browser verification.
-- Do not edit the `src/data` submodule unless the task explicitly concerns blog content.
+- Do not edit the `src/data/content` submodule unless the task explicitly concerns blog content.
 
 ## Project Snapshot
 
@@ -57,7 +57,8 @@ astro.config.mjs             Astro, i18n, Tailwind, Markdown, icon, and code-blo
 src/config.ts                Site identity, widths, navigation, and social links
 src/content.ts               Content mapping, loading, filtering, aliases, and slugs
 src/i18n/ui.ts               Locales, translation keys, and translation helpers
-src/data/                    Separate blog-data Git submodule
+src/data/                    Framework documentation and content data
+src/data/content/            Separate blog-data Git submodule
 src/pages/[lang]/            Locale-prefixed static routes
 src/layouts/                 Document shells
 src/components/common/       Site-wide head, header, footer, theme, language, viewer
@@ -141,7 +142,7 @@ The current list/single routes generally generate both locale pages; missing sin
 
 ## Content System
 
-Blog content is a Git submodule at `src/data` (`fux-i/blog-data`, branch `main`). Keeping it under `src/` lets Astro process Markdown imports and local assets natively.
+Blog content is a Git submodule at `src/data/content` (`fux-i/blog-data`, branch `main`). Framework documentation lives alongside it under `src/data/docs`. Keeping both under `src/` lets Astro process Markdown imports and local assets natively.
 
 `src/content.ts` is both configuration and runtime API. Users map content to pages through `CONTENT`:
 
@@ -160,7 +161,7 @@ type CollectionContent = {
 - Use a string for a single Markdown file shared by all locales.
 - Use `Record<Lang, string>` for localized single files.
 - Use `Record<Lang, RegExp>` for localized collections.
-- Collection regexes match paths relative to `src/data`, not absolute filesystem paths.
+- Collection regexes match paths relative to `src/data`, not absolute filesystem paths. Blog content mappings therefore include the `content/` prefix.
 
 All Markdown is loaded once and eagerly with the literal Vite glob:
 

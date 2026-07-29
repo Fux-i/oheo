@@ -1,3 +1,5 @@
+import { DATA_BASE } from "../content-paths";
+
 type ElementNode = {
   type: string;
   tagName?: string;
@@ -10,7 +12,7 @@ type MarkdownFile = {
   path?: string;
 };
 
-const DATA_BASE = "/src/data/";
+const DATA_PATH_PREFIX = `${DATA_BASE}/`;
 const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov", "m4v"]);
 
 function visitElements(node: ElementNode, visit: (node: ElementNode) => void) {
@@ -53,10 +55,10 @@ function encodeUrlPath(path: string): string {
 
 function dataRelativeDirectory(filePath: string): string | null {
   const normalized = filePath.replace(/\\/g, "/");
-  const dataIndex = normalized.lastIndexOf(DATA_BASE);
+  const dataIndex = normalized.lastIndexOf(DATA_PATH_PREFIX);
   if (dataIndex < 0) return null;
 
-  const relPath = normalized.slice(dataIndex + DATA_BASE.length);
+  const relPath = normalized.slice(dataIndex + DATA_PATH_PREFIX.length);
   const slash = relPath.lastIndexOf("/");
   return slash >= 0 ? relPath.slice(0, slash) : "";
 }
@@ -70,7 +72,7 @@ function resolveVideoSrc(src: string, filePath: string): string | null {
 
   const [pathname, suffix = ""] = src.split(/(?=[?#])/, 2);
   const relPath = normalizePath(`${baseDir}/${pathname}`);
-  return `${DATA_BASE}${encodeUrlPath(relPath)}${suffix}`;
+  return `${DATA_PATH_PREFIX}${encodeUrlPath(relPath)}${suffix}`;
 }
 
 function rewriteSrc(node: ElementNode, filePath: string) {

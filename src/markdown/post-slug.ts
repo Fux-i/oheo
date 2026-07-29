@@ -1,4 +1,4 @@
-const DATA_BASE = "/src/data/";
+import { CONTENT_PREFIX, DATA_BASE } from "../content-paths";
 
 type MarkdownFile = {
   path?: string;
@@ -11,14 +11,18 @@ type MarkdownFile = {
 
 function fallbackPostSlug(filePath: string): string {
   const normalized = filePath.replace(/\\/g, "/");
-  const dataIndex = normalized.lastIndexOf(DATA_BASE);
+  const dataPrefix = `${DATA_BASE}/`;
+  const dataIndex = normalized.lastIndexOf(dataPrefix);
   const relPath =
     dataIndex >= 0
-      ? normalized.slice(dataIndex + DATA_BASE.length)
+      ? normalized.slice(dataIndex + dataPrefix.length)
       : normalized.split("/").pop()!;
-  const noSourceDir = relPath.includes("/")
-    ? relPath.slice(relPath.indexOf("/") + 1)
+  const contentPath = relPath.startsWith(CONTENT_PREFIX)
+    ? relPath.slice(CONTENT_PREFIX.length)
     : relPath;
+  const noSourceDir = contentPath.includes("/")
+    ? contentPath.slice(contentPath.indexOf("/") + 1)
+    : contentPath;
   const base = noSourceDir.split("/").pop()!;
   const stem = base.split(".")[0];
   const dir = noSourceDir.includes("/")

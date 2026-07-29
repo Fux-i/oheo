@@ -1,0 +1,5 @@
+[submodule "src/data/content"]
+	path = src/data/content
+	url = https://github.com/fux-i/blog-data.git
+	branch = main
+	ignore = all

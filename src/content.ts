@@ -1,4 +1,7 @@
 import { type Lang } from "@/i18n/ui";
+import { CONTENT_PREFIX, DATA_BASE } from "./content-paths";
+
+export { CONTENT_PREFIX, DATA_BASE } from "./content-paths";
 
 type SingleContent = {
   type: "single";
@@ -14,29 +17,30 @@ type ContentEntry = SingleContent | CollectionContent;
 
 /* config */
 
-export const DATA_BASE = "/src/data";
-
 export const CONTENT = {
   about: {
     type: "single",
-    source: { zh: "about.md", en: "about.en.md" },
+    source: {
+      zh: "content/about.md",
+      en: "content/about.en.md",
+    },
   },
   friends: {
     type: "single",
-    source: "friends.md",
+    source: "content/friends.md",
   },
   posts: {
     type: "collection",
     source: {
-      zh: /^blog\/.*(?<!\.en)\.md$/,
-      en: /^blog\/.*\.en\.md$/,
+      zh: /^(?:content\/blog|docs)\/.*(?<!\.en)\.md$/,
+      en: /^(?:content\/blog|docs)\/.*\.en\.md$/,
     },
   },
   moments: {
     type: "collection",
     source: {
-      zh: /^diary\/.*(?<!\.en)\.md$/,
-      en: /^diary\/.*\.en\.md$/,
+      zh: /^content\/diary\/.*(?<!\.en)\.md$/,
+      en: /^content\/diary\/.*\.en\.md$/,
     },
   },
 } as const satisfies Record<string, ContentEntry>;
@@ -94,11 +98,14 @@ function resolveSourceString(
 }
 
 function fallbackSlug(path: string): string {
+  const contentPath = path.startsWith(CONTENT_PREFIX)
+    ? path.slice(CONTENT_PREFIX.length)
+    : path;
   // strip first segment (source dir) and all trailing .xxx suffixes
   // e.g. "blog/a/b/c.en.md" → "a/b/c"
-  const noSourceDir = path.includes("/")
-    ? path.slice(path.indexOf("/") + 1)
-    : path;
+  const noSourceDir = contentPath.includes("/")
+    ? contentPath.slice(contentPath.indexOf("/") + 1)
+    : contentPath;
   const base = noSourceDir.split("/").pop()!;
   const stem = base.split(".")[0];
   const dir = noSourceDir.includes("/")
