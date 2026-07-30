@@ -6,13 +6,10 @@ tags:
   - oheo
 ---
 
-Oheo keeps framework documentation in the main repository and loads personal content from the `src/data/content` submodule. The site can run without that submodule, while a production build can fetch the latest content from its configured `main` branch.
+Oheo keeps framework documentation in the main repository and loads personal content from the private `src/data/content` submodule. The site can run without that submodule.
 
-On every push to `blog-data`, use a GitHub Actions workflow in that repository to call an Oheo Vercel Deploy Hook. Configure the Vercel build to update the submodule before building:
+GitHub Pages deployment runs in Oheo. Its workflow checks out the private content with the `BLOG_DATA_TOKEN` Actions secret, builds with Astro's official Pages action, and deploys the generated site.
 
-```sh
-git submodule update --init --remote --depth 1 src/data/content
-pnpm build
-```
+The workflow runs after pushes to `oheo/main` and can be started manually. To deploy after content changes, `blog-data` sends a repository dispatch using an `OHEO_DISPATCH_TOKEN` Actions secret.
 
-This keeps blog commits out of Oheo's history. It also means that rebuilding the same Oheo commit can use newer blog content, because the content version is resolved at build time.
+This keeps blog commits out of Oheo's history and keeps the private repository inaccessible to GitHub Pages itself. Only the built public site is deployed.

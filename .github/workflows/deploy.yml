@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - blog-data-updated
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Oheo
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Check out blog data
+        uses: actions/checkout@v7
+        with:
+          repository: Fux-i/blog-data
+          ref: main
+          token: ${{ secrets.BLOG_DATA_TOKEN }}
+          path: src/data/content
+
+      - name: Build and upload site
+        uses: withastro/action@v6
+        with:
+          node-version: 22
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
