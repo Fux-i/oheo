@@ -1,4 +1,5 @@
 ---
+import { Icon } from "astro-icon/components";
 import { type CollectionItem } from "@/content";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
@@ -92,9 +93,10 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
           <button
             type="button"
             title={t("article.collapse")}
+            aria-label={t("article.collapse")}
             class="absolute left-13 collapse-btn grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-(--article-bg) shadow hover:brightness-90"
           >
-            ⏶
+            <Icon name="tabler:chevrons-up" class="size-5" />
           </button>
         )
       }
