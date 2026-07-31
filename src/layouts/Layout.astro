@@ -4,6 +4,7 @@ import Header from "@/components/common/Header.astro";
 import ImageViewer from "@/components/common/ImageViewer.astro";
 import ThemeScript from "@/components/common/ThemeScript.astro";
 import Footer from "@/components/common/Footer.astro";
+import VideoAssets from "@/components/common/VideoAssets.astro";
 import { getT } from "@/i18n/ui";
 
 interface Props {
@@ -25,7 +26,9 @@ const { t } = getT(Astro.currentLocale);
   </head>
   <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 pt-16">
     <Header backHref={backHref} />
-    <slot />
+    <VideoAssets>
+      <slot />
+    </VideoAssets>
     <ImageViewer
       labels={{
         close: t("viewer.close"),

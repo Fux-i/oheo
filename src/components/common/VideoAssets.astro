@@ -1,0 +1,7 @@
+---
+import { rewriteVideoAssetUrls } from "@/components/common/video-assets";
+
+const html = rewriteVideoAssetUrls(await Astro.slots.render("default"));
+---
+
+<Fragment set:html={html} />
