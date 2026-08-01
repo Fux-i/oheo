@@ -16,7 +16,7 @@ Always call me "Fuxi".
 - Extract reusable or self-contained logic into its own file. The existing `Component.astro` plus `component-parts.ts` or client `.ts` pattern is preferred when it fits.
 - Add comments only when critical, and write them in English.
 - Search is out of scope unless I explicitly bring it back into scope.
-- Do not start the dev server. I run it myself at `http://localhost:4500`; you may inspect that running instance for browser verification.
+- Do not start the dev server. I run it myself at `http://localhost:4444`; you may inspect that running instance for browser verification.
 - Do not edit the `src/data/content` submodule unless the task explicitly concerns blog content.
 
 ## Project Snapshot
