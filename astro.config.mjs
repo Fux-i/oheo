@@ -27,6 +27,11 @@ export default defineConfig({
     '/': '/en/',
   },
 
+  image: {
+    layout: 'constrained',
+    responsiveStyles: false,
+  },
+
   vite: {
     plugins: [tailwindcss()],
   },

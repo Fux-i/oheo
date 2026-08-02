@@ -63,7 +63,7 @@ function wrapImage(image: HTMLImageElement): HTMLAnchorElement | null {
   if (!width || !height) return null;
 
   const link = document.createElement("a");
-  link.href = image.currentSrc || image.src;
+  link.href = image.src;
   link.dataset.pswpWidth = String(width);
   link.dataset.pswpHeight = String(height);
   link.setAttribute("aria-label", image.alt || "Open image");
