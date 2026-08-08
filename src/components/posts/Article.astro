@@ -1,4 +1,5 @@
 ---
+import { getRelativeLocaleUrl } from "astro:i18n";
 import { Icon } from "astro-icon/components";
 import { type CollectionItem } from "@/content";
 import { SITE } from "@/config";
@@ -24,6 +25,7 @@ const updatedAtLabel = formatPostDate(updatedAt);
 const tags: string[] = frontmatter.tags ?? [];
 const hasMeta = publishedAt || updatedAt || tags.length > 0;
 const title = frontmatter.title ?? item.slug;
+const searchUrl = getRelativeLocaleUrl(lang, "search");
 const searchAttributes = exclusive
   ? {
       "data-search-document": "",
@@ -57,7 +59,9 @@ const searchAttributes = exclusive
   >
     {
       exclusive ? (
-        <h1 id={item.slug} data-search-exclude>{title}</h1>
+        <h1 id={item.slug} data-search-exclude>
+          {title}
+        </h1>
       ) : (
         <a
           href={item.slug}
@@ -90,11 +94,14 @@ const searchAttributes = exclusive
             </span>
           )}
           {tags.length > 0 && (
-            <tag-list class="flex flex-wrap items-center gap-2">
+            <tag-list class="no-article flex flex-wrap items-center gap-2">
               {tags.map((tag) => (
-                <post-tag class="shrink-0 whitespace-nowrap border border-gray-200 px-2 py-0.5 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-300">
+                <a
+                  href={`${searchUrl}?${new URLSearchParams({ tag })}`}
+                  class="shrink-0 whitespace-nowrap border border-gray-200 px-2 py-0.5 text-xs text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
+                >
                   {tag}
-                </post-tag>
+                </a>
               ))}
             </tag-list>
           )}
