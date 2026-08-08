@@ -73,9 +73,14 @@ const iconBtn =
     <placeholder class="flex-1"></placeholder>
 
     <tool-bar class="flex items-center gap-1">
-      <button type="button" title={t("btn.search")} class={iconBtn}>
+      <a
+        href={getRelativeLocaleUrl(lang, "search")}
+        title={t("btn.search")}
+        aria-label={t("btn.search")}
+        class={iconBtn}
+      >
         <Icon name="tabler:search" class="size-5" />
-      </button>
+      </a>
       <button
         type="button"
         title={t("btn.theme")}
@@ -145,13 +150,14 @@ const iconBtn =
         }
       </nav>
       <tool-bar class="flex justify-center items-center gap-1">
-        <button
-          type="button"
+        <a
+          href={getRelativeLocaleUrl(lang, "search")}
           title={t("btn.search")}
+          aria-label={t("btn.search")}
           class:list={[iconBtn, "size-10"]}
         >
           <Icon name="tabler:search" class="size-7" />
-        </button>
+        </a>
         <button
           type="button"
           title={t("btn.theme")}

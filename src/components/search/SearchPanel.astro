@@ -1,0 +1,212 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { Icon } from "astro-icon/components";
+import { SITE } from "@/config";
+import { getT } from "@/i18n/ui";
+
+const { lang, t } = getT(Astro.currentLocale);
+---
+
+<search-panel
+  data-search-root
+  data-lang={lang}
+  data-index-url={`/search-index/${lang}.json`}
+  data-max-results={SITE.search.max_results}
+  data-label-loading={t("search.loading")}
+  data-label-results={t("search.result_count")}
+  data-label-results-limited={t("search.result_count_limited")}
+  data-label-empty={t("search.empty")}
+  data-label-error={t("search.error")}
+  data-label-post={t("search.post")}
+  data-label-moment={t("search.moment")}
+  class="block"
+  aria-busy="true"
+>
+  <form
+    data-search-form
+    role="search"
+    action={getRelativeLocaleUrl(lang, "search")}
+    class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,12rem)]"
+  >
+    <label class="relative block min-w-0">
+      <span class="sr-only">{t("btn.search")}</span>
+      <Icon
+        name="tabler:search"
+        class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400"
+      />
+      <input
+        data-search-query
+        type="search"
+        name="q"
+        autocomplete="off"
+        placeholder={t("search.placeholder")}
+        class="h-11 w-full rounded-lg border border-gray-300 bg-white pr-12 pl-10 text-base outline-none transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+      />
+      <button
+        type="submit"
+        title={t("btn.search")}
+        aria-label={t("btn.search")}
+        class="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-50"
+      >
+        <Icon name="tabler:arrow-right" class="size-5" />
+      </button>
+    </label>
+
+    <div data-search-tag-control class="relative w-full sm:w-auto">
+      <input
+        data-search-tag
+        name="tag"
+        type="hidden"
+        value=""
+      />
+      <button
+        data-search-tag-button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        disabled
+        class="flex h-10 max-w-full cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition-colors hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-wait disabled:opacity-60 sm:h-11 sm:w-full dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+      >
+        <Icon name="tabler:tag" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
+        <span class="sr-only">{t("search.tag")}: </span>
+        <span data-search-tag-value class="min-w-0 truncate">
+          {t("search.tag_all")}
+        </span>
+        <Icon
+          data-search-tag-chevron
+          name="tabler:chevron-down"
+          class="size-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400"
+        />
+      </button>
+
+      <ul
+        data-search-tag-list
+        role="listbox"
+        aria-label={t("search.tag")}
+        hidden
+        class="absolute top-full left-0 z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+      >
+        <li role="presentation">
+          <button
+            data-search-tag-option
+            data-value=""
+            type="button"
+            role="option"
+            aria-selected="true"
+            tabindex="-1"
+            class="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none aria-selected:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-gray-700"
+          >
+            <span data-search-tag-option-label class="min-w-0 flex-1 truncate">
+              {t("search.tag_all")}
+            </span>
+            <Icon
+              data-search-tag-check
+              name="tabler:check"
+              class="size-4 shrink-0"
+            />
+          </button>
+        </li>
+      </ul>
+    </div>
+  </form>
+
+  <p
+    data-search-status
+    aria-live="polite"
+    class="mt-5 min-h-6 text-sm text-gray-500 dark:text-gray-400"
+  >
+    {t("search.loading")}
+  </p>
+
+  <ol data-search-results class="mt-2 grid gap-3"></ol>
+
+  <template data-search-result-template>
+    <li>
+      <article
+        class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+      >
+        <search-result-header
+          class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2"
+        >
+          <a
+            data-result-title
+            class="min-w-0 flex-1 wrap-break-word text-lg font-semibold text-gray-950 underline-offset-4 hover:text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-50 dark:hover:text-blue-300"
+          ></a>
+          <span
+            data-result-kind
+            class="shrink-0 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          ></span>
+          <time
+            data-result-date
+            class="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+          ></time>
+        </search-result-header>
+        <p
+          data-result-excerpt
+          class="mt-3 line-clamp-3 wrap-break-word text-sm leading-6 text-gray-600 dark:text-gray-300"
+        ></p>
+        <tag-list
+          data-result-tags
+          class="mt-3 flex flex-wrap gap-2 empty:hidden"
+        ></tag-list>
+      </article>
+    </li>
+  </template>
+
+  <template data-search-tag-template>
+    <span
+      class="rounded-md border border-gray-200 px-2 py-0.5 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-300"
+    ></span>
+  </template>
+
+  <template data-search-tag-option-template>
+    <li role="presentation">
+      <button
+        data-search-tag-option
+        type="button"
+        role="option"
+        aria-selected="false"
+        tabindex="-1"
+        class="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none aria-selected:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-gray-700"
+      >
+        <span
+          data-search-tag-option-label
+          class="min-w-0 flex-1 truncate"
+        ></span>
+        <Icon
+          data-search-tag-check
+          name="tabler:check"
+          class="size-4 shrink-0"
+        />
+      </button>
+    </li>
+  </template>
+</search-panel>
+
+<script>
+  import "./search-client";
+</script>
+
+<style>
+  [data-search-query]::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+
+  [data-search-tag-button][aria-expanded="true"] [data-search-tag-chevron] {
+    transform: rotate(180deg);
+  }
+
+  [data-search-tag-option] [data-search-tag-check] {
+    opacity: 0;
+  }
+
+  [data-search-tag-option][aria-selected="true"] [data-search-tag-check] {
+    opacity: 1;
+  }
+
+  [data-result-excerpt] :global(mark) {
+    border-radius: 0.15em;
+    background: color-mix(in srgb, var(--color-yellow-300) 65%, transparent);
+    color: inherit;
+  }
+</style>

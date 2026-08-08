@@ -18,6 +18,8 @@
     "astro": "^6.2.1",
     "astro-expressive-code": "^0.42.0",
     "astro-icon": "^1.1.5",
+    "minisearch": "^7.2.0",
+    "node-html-parser": "^9.0.1",
     "photoswipe": "^5.4.4",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",

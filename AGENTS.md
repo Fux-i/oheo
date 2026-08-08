@@ -16,7 +16,6 @@ Always call me "Fuxi".
 - Extract reusable or self-contained logic into its own file. The existing `Component.astro` plus `component-parts.ts` or client `.ts` pattern is preferred when it fits.
 - Add comments only when critical, and write them in English.
 - Search is out of scope unless I explicitly bring it back into scope.
-- Do not start the dev server. I run it myself at `http://localhost:4444`; you may inspect that running instance for browser verification.
 - Do not edit the `src/data/content` submodule unless the task explicitly concerns blog content.
 
 ## Project Snapshot
@@ -35,21 +34,6 @@ Oheo is a static, bilingual Astro blog framework intended to become a customizab
 
 `README.md` is still the Astro starter README and is not an architectural source of truth. Prefer this file and the current code/configuration.
 
-## Commands
-
-Run commands from the repository root:
-
-```sh
-pnpm install
-pnpm build
-pnpm preview
-pnpm astro -- --help
-```
-
-- `pnpm build` is the main repository-wide verification command.
-- There are currently no dedicated test, lint, format, or `astro check` scripts.
-- Do not run `pnpm dev`; use Fuxi's existing server at `localhost:4500` when browser checks are needed.
-
 ## Source Map
 
 ```text
@@ -65,9 +49,11 @@ src/components/common/       Site-wide head, header, footer, theme, language, vi
 src/components/home/         Home hero and starfield
 src/components/posts/        Post rendering and sorting
 src/components/moments/      Moment timeline cards and sorting
+src/components/search/       Search UI and framework-free client behavior
 src/components/friends/      Friend cards and data type
 src/components/utils/        Outline and shared interaction utilities
 src/markdown/                Rehype transforms and shared anchor/slug helpers
+src/search/                  Shared MiniSearch setup and build-time index generation
 src/styles/global.css        Tailwind entry point, global imports, theme variables
 src/styles/article.css       Markdown typography under `.article`
 ```
@@ -80,6 +66,7 @@ Use the `@/*` alias for imports from `src/*`.
 
 - `author` and `favicon`
 - `header_width`, `header_collapse_width`, and `page_width`
+- `search.max_results`, `search.fuzzy_ratio`, and per-field search weights
 - navigation entries as `{ key, href }`
 - social entries as `{ name, href, key, icon }`
 
@@ -106,6 +93,7 @@ All pages live under `src/pages/[lang]/` and declare `getStaticPaths()`. Use Ast
 - `posts/[...slug].astro` generates one full post page per matched content item and supports nested slugs.
 - `moments.astro` renders the sorted diary timeline.
 - `friends.astro` renders shared `friends.md` data and content.
+- `search.astro` renders the dedicated `/[lang]/search?q=&tag=` search page.
 - `archives.astro` is currently a placeholder and its nav entry is disabled in `src/config.ts`.
 
 Layout responsibilities:
@@ -166,7 +154,7 @@ type CollectionContent = {
 All Markdown is loaded once and eagerly with the literal Vite glob:
 
 ```ts
-import.meta.glob<MdModule>("/src/data/**/*.md", { eager: true })
+import.meta.glob<MdModule>("/src/data/**/*.md", { eager: true });
 ```
 
 The glob must remain a string literal because Vite requires it.
@@ -187,8 +175,8 @@ Slug fallback logic also exists in `src/markdown/post-slug.ts` because Markdown 
 Common collection controls:
 
 ```yaml
-draft: true   # exclude from collections
-show: false   # also exclude from collections
+draft: true # exclude from collections
+show: false # also exclude from collections
 slug: path/to/item
 ```
 
@@ -241,6 +229,34 @@ Markdown asset rules:
 - Relative video paths are supported for `mp4`, `webm`, `ogg`, `mov`, and `m4v` by the custom rehype transform.
 - Image-only Markdown paragraphs inside `.article` are enhanced into PhotoSwipe galleries. Alt text is used as the accessible label and viewer caption, so preserve meaningful alt text.
 
+## Search System
+
+Search is a dedicated page at `/[lang]/search?q=&tag=`. The header links to it from both desktop and mobile navigation; it is not a modal. Query and Tag state live in the URL, update without a page reload, and are restored on browser history changes.
+
+Search is intentionally build-dependent:
+
+- `search-index-integration.ts` runs in `astro:build:done`, scans the rendered HTML, and writes `dist/search-index/en.json` and `dist/search-index/zh.json`.
+- The browser loads only the index matching the current route locale, so English and Chinese posts/moments never mix and there is no cross-language fallback.
+- Validate search with `pnpm build` followed by `pnpm preview`; the development server is not the source of truth for generated indexes.
+
+Rendered content opts into indexing through a small DOM contract:
+
+- A root with `data-search-document` supplies ID, kind, language, URL, title, date, and serialized tags through the adjacent `data-search-*` attributes.
+- Its searchable content is scoped by `data-search-body`. `data-search-exclude`, UI controls, templates, SVG, duplicate metadata, and rendered math accessibility markup are excluded from normal body text.
+- Code blocks are excluded from body text and extracted separately into the `code` field, including Expressive Code line content without gutters or line numbers.
+- `Article.astro` emits the contract only for exclusive post detail pages to avoid duplicate post-list entries. `MomentCard.astro` emits one document per rendered moment.
+
+`search-core.ts` is shared by index generation and the browser client. Keep its fields, stored fields, tokenizer, normalization, boosts, prefix matching, and fuzzy settings synchronized by reusing `getSearchOptions()` rather than duplicating MiniSearch options.
+
+- Indexed fields are `title`, `body`, and `code`; their weights and result cap come from `SITE.search`.
+- Matching combines terms with `AND`, supports prefixes and fuzzy matches, and caps fuzzy edit distance at two. One-character terms are not fuzzy-matched.
+- Chinese tokenization uses `Intl.Segmenter` plus Han-character tokens and overlapping bigrams. Short Chinese queries use an edit distance of one so minor character errors can still match without making single-character searches noisy.
+- Results sort by relevance score, then date descending, then localized title. Snippets prefer the matched body or code field and highlight matched terms.
+
+Tag filtering is exact and independent of the text query. The custom Tag list contains tags from the current language index, ordered by document frequency descending and then locale-aware alphabetical order. Count each Tag at most once per document. Preserve its listbox semantics, keyboard navigation, focus behavior, scrolling limit, mobile width containment, and `dismissible.ts` outside-pointer/focus dismissal when changing it.
+
+Search UI labels belong in both dictionaries in `src/i18n/ui.ts`. `SearchPanel.astro` owns the rendered controls/templates and responsive styling; `search-client.ts` owns index loading, URL state, searching, filtering, snippets, result rendering, and Tag-menu interaction.
+
 ## Components And Client Code
 
 Keep Astro responsible for rendering and use small TypeScript/DOM scripts for interaction. There is no client UI framework.
@@ -249,6 +265,7 @@ Keep Astro responsible for rendering and use small TypeScript/DOM scripts for in
 - `ThemeScript.astro` must stay in `<head>` before paint to avoid a theme flash.
 - Theme state is stored as `light`, `dark`, or system preference and rendered through `data-theme` on `<html>`.
 - `ImageViewer.astro` exposes options through data attributes; `image-viewer.ts` owns PhotoSwipe enhancement.
+- `SearchPanel.astro` exposes localized labels and configuration through data attributes; `search-client.ts` owns its MiniSearch and Tag-menu behavior.
 - `Article.astro` emits `article-layout-change` after expand/collapse; the outline client listens for it to recompute geometry.
 - `dismissible.ts` centralizes outside-pointer and focus-loss dismissal behavior.
 - `Starfield.astro` respects `prefers-reduced-motion`, caps device-pixel ratio work, and reacts to theme/resize changes.
@@ -272,9 +289,10 @@ Reusable client initialization must tolerate multiple matching component instanc
 After implementation, verify in proportion to the change:
 
 1. Run `pnpm build` for routing, Markdown, TypeScript, and bundling failures.
-2. Use Fuxi's running `http://localhost:4500` instance for rendered behavior; do not start another server.
+2. Use Fuxi's running `http://localhost:4444` instance for rendered behavior; do not start another server.
 3. Check both `/en/` and `/zh/` for changes to routes, translations, navigation, content, or layout.
 4. Check both light and dark themes for visual changes.
 5. Check a narrow mobile viewport and a desktop viewport for responsive changes.
 6. For Markdown/article changes, check the post list and a nested detail route, headings/outline, footnotes, code, math, images, and videos as applicable.
 7. For content mapping changes, confirm hidden/draft filtering, locale matching, stable slugs, and home-page counts.
+8. For search changes, rebuild first and confirm both locale index files and indexed-document counts. Then test query-only, Tag-only, combined, fuzzy title/body/code matches, URL restoration, empty/error states, Tag frequency order, keyboard dismissal, and mobile/desktop layout in both themes.

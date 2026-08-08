@@ -8,6 +8,7 @@ import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
 import rehypeHeadingAnchors from './src/markdown/rehype-heading-anchors';
 import rehypeFootnoteAnchors from './src/markdown/rehype-footnote-anchors';
 import rehypeVideoSrc from './src/markdown/rehype-video-src';
+import searchIndex from './src/search/search-index-integration';
 
 // https://astro.build/config
 export default defineConfig({
@@ -49,5 +50,6 @@ export default defineConfig({
       useDarkModeMediaQuery: false,
       plugins: [pluginLineNumbers(),]
     }),
+    searchIndex(),
   ],
 });

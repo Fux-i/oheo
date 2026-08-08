@@ -13,7 +13,7 @@ interface Props {
 
 const { item, exclusive } = Astro.props;
 const { Content, frontmatter } = item;
-const { t } = getT(Astro.currentLocale);
+const { lang, t } = getT(Astro.currentLocale);
 
 const page_width = "max-w-" + SITE.page_width;
 
@@ -23,9 +23,23 @@ const publishedAtLabel = formatPostDate(publishedAt);
 const updatedAtLabel = formatPostDate(updatedAt);
 const tags: string[] = frontmatter.tags ?? [];
 const hasMeta = publishedAt || updatedAt || tags.length > 0;
+const title = frontmatter.title ?? item.slug;
+const searchAttributes = exclusive
+  ? {
+      "data-search-document": "",
+      "data-search-id": `post:${lang}:${item.slug}`,
+      "data-search-kind": "post",
+      "data-search-lang": lang,
+      "data-search-url": Astro.url.pathname,
+      "data-search-title": title,
+      "data-search-date": publishedAt ?? "",
+      "data-search-tags": JSON.stringify(tags),
+    }
+  : {};
 ---
 
 <div
+  {...searchAttributes}
   class:list={[
     page_width,
     "article-wrapper relative mx-auto shadow",
@@ -33,6 +47,7 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
   ]}
 >
   <article
+    data-search-body={exclusive ? "" : undefined}
     class:list={[
       "article bg-(--article-bg) py-4",
       exclusive ? "px-8" : "px-4 sm:px-8",
@@ -42,19 +57,22 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
   >
     {
       exclusive ? (
-        <h1 id={item.slug}>{frontmatter.title ?? item.slug}</h1>
+        <h1 id={item.slug} data-search-exclude>{title}</h1>
       ) : (
         <a
           href={item.slug}
           class:list={"title-a text-xl transition-[font-size] duration-300"}
         >
-          <b>{frontmatter.title ?? item.slug}</b>
+          <b>{title}</b>
         </a>
       )
     }
     {
       hasMeta && (
-        <post-meta class="my-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
+        <post-meta
+          data-search-exclude
+          class="my-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-500 dark:text-gray-400"
+        >
           {(publishedAt || updatedAt) && (
             <span class="min-w-0">
               {publishedAt && (

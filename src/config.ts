@@ -4,6 +4,15 @@ export const SITE = {
   header_width: "5xl",  // 3xl, 4xl(56rem), 5xl(64rem), 6xl(72rem), or 7xl
   header_collapse_width: "48rem",
   page_width: "5xl",
+  search: {
+    max_results: 30,
+    fuzzy_ratio: 0.2,
+    weights: {
+      title: 5,
+      body: 1,
+      code: 1,
+    },
+  },
   navs: [
     { key: "nav.posts", href: "posts" },
     { key: "nav.moments", href: "moments" },

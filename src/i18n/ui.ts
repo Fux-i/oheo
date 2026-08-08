@@ -43,7 +43,17 @@ export const ui = {
     'viewer.previous': 'Previous image',
     'viewer.next': 'Next image',
     'viewer.error': 'The image could not be loaded',
-    'friends.empty': 'No friend for now'
+    'friends.empty': 'No friend for now',
+    'search.placeholder': 'Search',
+    'search.tag': 'Tag',
+    'search.tag_all': 'All tags',
+    'search.loading': 'Loading search index...',
+    'search.result_count': '{count} results',
+    'search.result_count_limited': 'Showing {shown} of {count} results',
+    'search.empty': 'No results',
+    'search.error': 'Search is temporarily unavailable',
+    'search.post': 'Post',
+    'search.moment': 'Moment'
   },
   zh: {
     'site.title': "Fuxi's Blog",
@@ -78,7 +88,17 @@ export const ui = {
     'viewer.previous': '上一张图片',
     'viewer.next': '下一张图片',
     'viewer.error': '图片加载失败',
-    'friends.empty': '暂时还没有友链哦'
+    'friends.empty': '暂时还没有友链哦',
+    'search.placeholder': '搜索',
+    'search.tag': '标签',
+    'search.tag_all': '全部标签',
+    'search.loading': '正在加载搜索索引...',
+    'search.result_count': '共 {count} 条结果',
+    'search.result_count_limited': '显示 {count} 条结果中的前 {shown} 条',
+    'search.empty': '没有搜索结果',
+    'search.error': '搜索暂时不可用',
+    'search.post': '文章',
+    'search.moment': '动态'
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 

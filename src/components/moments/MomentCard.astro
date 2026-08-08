@@ -1,14 +1,22 @@
 ---
+import { getRelativeLocaleUrl } from "astro:i18n";
 import { type CollectionItem } from "@/content";
-import { getMomentDate } from "./moment-parts";
+import { getT } from "@/i18n/ui";
+import { getMomentAnchor, getMomentDate } from "./moment-parts";
 
 interface Props {
   item: CollectionItem;
 }
 
 const { item } = Astro.props;
-const { Content } = item;
+const { Content, frontmatter } = item;
+const { lang, t } = getT(Astro.currentLocale);
 const date = getMomentDate(item);
+const anchor = getMomentAnchor(item);
+const title = frontmatter.title ?? `${t("search.moment")} · ${date}`;
+const tags: string[] = frontmatter.tags ?? [];
+const momentsUrl = getRelativeLocaleUrl(lang, "moments").replace(/\/$/, "");
+const url = `${momentsUrl}#${encodeURIComponent(anchor)}`;
 const dateParts = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 const year = dateParts?.[1] ?? "";
 const month = dateParts ? String(Number(dateParts[2])) : "";
@@ -16,7 +24,16 @@ const day = dateParts ? String(Number(dateParts[3])) : date;
 ---
 
 <moment-card
-  class="relative grid min-w-0 gap-4 sm:grid-cols-[6rem_minmax(0,1fr)]"
+  id={anchor}
+  data-search-document
+  data-search-id={`moment:${lang}:${item.slug}`}
+  data-search-kind="moment"
+  data-search-lang={lang}
+  data-search-url={url}
+  data-search-title={title}
+  data-search-date={date}
+  data-search-tags={JSON.stringify(tags)}
+  class="relative grid min-w-0 scroll-mt-20 gap-4 sm:grid-cols-[6rem_minmax(0,1fr)]"
 >
   <time-rail
     class="relative flex items-start gap-3 sm:block sm:pt-3 sm:text-right"
@@ -42,6 +59,7 @@ const day = dateParts ? String(Number(dateParts[3])) : date;
 
   <moment-body class="relative ml-4 block min-w-0 pl-4 sm:ml-0 sm:pl-6">
     <article
+      data-search-body
       class="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-5"
     >
       <moment-content
