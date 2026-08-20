@@ -1,7 +1,22 @@
 import { type CollectionItem } from "@/content";
 
+const DATE_ONLY_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:T00:00:00\.000Z)?$/;
+
+function normalizePostDate(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  return typeof value === "string" ? value : "";
+}
+
+export function formatPostDate(value: unknown): string {
+  const normalized = normalizePostDate(value);
+  return normalized.match(DATE_ONLY_PATTERN)?.[1] ?? normalized;
+}
+
 export function getPostPublishedTime(item: CollectionItem): string {
-  return item.frontmatter["published-at"] ?? "";
+  const publishedAt = normalizePostDate(item.frontmatter["published-at"]);
+  const date = publishedAt.match(DATE_ONLY_PATTERN)?.[1];
+
+  return date ? `${date}T08:00:00` : publishedAt;
 }
 
 export function comparePosts(a: CollectionItem, b: CollectionItem): number {

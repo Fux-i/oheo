@@ -3,6 +3,7 @@ import { Icon } from "astro-icon/components";
 import { type CollectionItem } from "@/content";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
+import { formatPostDate } from "./post-parts";
 import Outline from "../utils/Outline.astro";
 
 interface Props {
@@ -18,6 +19,8 @@ const page_width = "max-w-" + SITE.page_width;
 
 const publishedAt = frontmatter["published-at"];
 const updatedAt = frontmatter["updated-at"];
+const publishedAtLabel = formatPostDate(publishedAt);
+const updatedAtLabel = formatPostDate(updatedAt);
 const tags: string[] = frontmatter.tags ?? [];
 const hasMeta = publishedAt || updatedAt || tags.length > 0;
 ---
@@ -57,13 +60,13 @@ const hasMeta = publishedAt || updatedAt || tags.length > 0;
               {publishedAt && (
                 <span>
                   {t("article.published_at")}{" "}
-                  <time datetime={publishedAt}>{publishedAt}</time>
+                  <time datetime={publishedAt}>{publishedAtLabel}</time>
                 </span>
               )}
               {updatedAt && (
                 <span>
                   {t("article.updated_at")}{" "}
-                  <time datetime={updatedAt}>{updatedAt}</time>
+                  <time datetime={updatedAt}>{updatedAtLabel}</time>
                 </span>
               )}
             </span>
