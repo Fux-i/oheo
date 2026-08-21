@@ -3,7 +3,11 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parse, type HTMLElement } from "node-html-parser";
 import { type AstroIntegration } from "astro";
-import { createSearchIndex, type SearchDocument } from "./search-core";
+import {
+  createSearchIndex,
+  type SearchAnchor,
+  type SearchDocument,
+} from "./search-core";
 import { type Lang } from "../i18n/ui";
 
 const LANGS: Lang[] = ["en", "zh"];
@@ -50,36 +54,92 @@ function normalizeCode(text: string): string {
     .trim();
 }
 
-function extractCode(body: HTMLElement): string {
-  return normalizeCode(
-    body
-      .querySelectorAll("pre")
-      .map((pre) => {
-        const source = pre.querySelector("code") ?? pre;
-        const clean = parse(source.innerHTML);
-        for (const selector of EXCLUDED_CODE_SELECTORS) {
-          clean.querySelectorAll(selector).forEach((node) => node.remove());
-        }
+type ExtractedText = {
+  text: string;
+  anchors: SearchAnchor[];
+};
 
-        const expressiveCodeLines = clean.querySelectorAll(".ec-line");
-        const lines =
-          expressiveCodeLines.length > 0
-            ? expressiveCodeLines
-            : clean.querySelectorAll(".line");
-        return lines.length > 0
-          ? lines.map((line) => line.text).join("\n")
-          : clean.structuredText;
-      })
-      .join("\n\n"),
+function getElementId(element: HTMLElement): string | null {
+  return element.getAttribute("id") || null;
+}
+
+function extractCodeBlock(pre: HTMLElement): string {
+  const source = pre.querySelector("code") ?? pre;
+  const clean = parse(source.innerHTML);
+  for (const selector of EXCLUDED_CODE_SELECTORS) {
+    clean.querySelectorAll(selector).forEach((node) => node.remove());
+  }
+
+  const expressiveCodeLines = clean.querySelectorAll(".ec-line");
+  const lines =
+    expressiveCodeLines.length > 0
+      ? expressiveCodeLines
+      : clean.querySelectorAll(".line");
+  return normalizeCode(
+    lines.length > 0
+      ? lines.map((line) => line.text).join("\n")
+      : clean.structuredText,
   );
 }
 
-function extractBody(body: HTMLElement): string {
+function extractCode(body: HTMLElement): ExtractedText {
+  const chunks: string[] = [];
+  const anchors: SearchAnchor[] = [];
+  let currentAnchor: string | null = null;
+  let offset = 0;
+
+  for (const element of body.querySelectorAll<HTMLElement>(
+    "h2[id], h3[id], h4[id], h5[id], h6[id], pre",
+  )) {
+    if (element.tagName !== "PRE") {
+      currentAnchor = getElementId(element);
+      continue;
+    }
+
+    const code = extractCodeBlock(element);
+    if (!code) continue;
+    if (chunks.length > 0) offset += 2;
+    if (currentAnchor && anchors.at(-1)?.id !== currentAnchor) {
+      anchors.push({ id: currentAnchor, offset });
+    }
+    chunks.push(code);
+    offset += code.length;
+  }
+
+  return { text: chunks.join("\n\n"), anchors };
+}
+
+function extractBody(body: HTMLElement): ExtractedText {
   const clean = parse(body.innerHTML);
   for (const selector of EXCLUDED_BODY_SELECTORS) {
     clean.querySelectorAll(selector).forEach((node) => node.remove());
   }
-  return normalizeText(clean.structuredText);
+
+  const markedAnchors = clean
+    .querySelectorAll<HTMLElement>("h2[id], h3[id], h4[id], h5[id], h6[id]")
+    .flatMap((heading, index) => {
+      const id = getElementId(heading);
+      if (!id) return [];
+
+      const marker = `__OHEO_SEARCH_ANCHOR_${index}__`;
+      heading.innerHTML = marker + heading.innerHTML;
+      return [{ id, marker }];
+    });
+  const markedText = normalizeText(clean.structuredText);
+  const anchors: SearchAnchor[] = [];
+  let text = "";
+  let cursor = 0;
+  for (const { id, marker } of markedAnchors) {
+    const markerOffset = markedText.indexOf(marker, cursor);
+    if (markerOffset < 0) continue;
+
+    text += markedText.slice(cursor, markerOffset);
+    anchors.push({ id, offset: text.length });
+    cursor = markerOffset + marker.length;
+  }
+  text += markedText.slice(cursor);
+
+  return { text, anchors };
 }
 
 function parseTags(value: string | undefined): string[] {
@@ -115,14 +175,20 @@ function readDocument(element: HTMLElement): SearchDocument | null {
     return null;
   }
 
+  const extractedBody = extractBody(body);
+  const extractedCode = extractCode(body);
+
   return {
     id,
     kind,
     lang,
     url,
+    rootAnchor: element.getAttribute("data-search-root-anchor") ?? "",
     title,
-    body: extractBody(body),
-    code: extractCode(body),
+    body: extractedBody.text,
+    bodyAnchors: extractedBody.anchors,
+    code: extractedCode.text,
+    codeAnchors: extractedCode.anchors,
     date: element.getAttribute("data-search-date") ?? "",
     tags: parseTags(element.getAttribute("data-search-tags")),
   };

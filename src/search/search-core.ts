@@ -4,14 +4,22 @@ import { type Lang } from "../i18n/ui";
 
 export type SearchDocumentKind = "post" | "moment";
 
+export type SearchAnchor = {
+  id: string;
+  offset: number;
+};
+
 export type SearchDocument = {
   id: string;
   kind: SearchDocumentKind;
   lang: Lang;
   url: string;
+  rootAnchor: string;
   title: string;
   body: string;
+  bodyAnchors: SearchAnchor[];
   code: string;
+  codeAnchors: SearchAnchor[];
   date: string;
   tags: string[];
 };
@@ -21,9 +29,12 @@ export const SEARCH_STORE_FIELDS = [
   "kind",
   "lang",
   "url",
+  "rootAnchor",
   "title",
   "body",
+  "bodyAnchors",
   "code",
+  "codeAnchors",
   "date",
   "tags",
 ] as const;

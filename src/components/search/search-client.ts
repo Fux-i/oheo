@@ -1,6 +1,11 @@
 import MiniSearch, { type SearchResult } from "minisearch";
 import { dismissWhenInactive } from "@/components/utils/dismissible";
-import { getSearchOptions, type SearchDocument } from "@/search/search-core";
+import {
+  getSearchOptions,
+  tokenizeSearchText,
+  type SearchAnchor,
+  type SearchDocument,
+} from "@/search/search-core";
 import { type Lang } from "@/i18n/ui";
 
 type StoredSearchResult = SearchResult & Omit<SearchDocument, "id">;
@@ -15,6 +20,87 @@ type SearchLabels = {
 };
 
 const initialized = new WeakSet<HTMLElement>();
+
+function getMatchedField(result: StoredSearchResult): "body" | "code" | null {
+  const matchedFields = Object.values(result.match).flat();
+  if (matchedFields.includes("body")) return "body";
+  if (matchedFields.includes("code")) return "code";
+  return null;
+}
+
+function getMatchPosition(
+  source: string,
+  terms: string[],
+  lang: Lang,
+): number {
+  const normalized = source.toLocaleLowerCase(lang);
+  const positions = terms
+    .map((term) => normalized.indexOf(term.toLocaleLowerCase(lang)))
+    .filter((position) => position >= 0);
+  return positions.length > 0 ? Math.min(...positions) : 0;
+}
+
+function getEditDistance(left: string, right: string): number {
+  const leftCharacters = [...left];
+  const rightCharacters = [...right];
+  let previous = rightCharacters.map((_, index) => index + 1);
+
+  for (let leftIndex = 0; leftIndex < leftCharacters.length; leftIndex += 1) {
+    const current = [leftIndex + 1];
+    for (
+      let rightIndex = 0;
+      rightIndex < rightCharacters.length;
+      rightIndex += 1
+    ) {
+      current.push(
+        Math.min(
+          current[rightIndex] + 1,
+          previous[rightIndex + 1] + 1,
+          previous[rightIndex] +
+            (leftCharacters[leftIndex] === rightCharacters[rightIndex] ? 0 : 1),
+        ),
+      );
+    }
+    previous = current;
+  }
+
+  return previous.at(-1) ?? leftCharacters.length;
+}
+
+function getHighlightTerms(
+  result: StoredSearchResult,
+  query: string,
+  lang: Lang,
+): string[] {
+  const matchedField = getMatchedField(result);
+  const fieldTerms = matchedField
+    ? result.terms.filter((term) => result.match[term]?.includes(matchedField))
+    : result.terms;
+  const candidates = fieldTerms.length > 0 ? fieldTerms : result.terms;
+
+  return [
+    ...new Set(
+      tokenizeSearchText(query, lang, true).map((queryTerm) =>
+        candidates.reduce((best, candidate) => {
+          const bestDistance = getEditDistance(queryTerm, best);
+          const candidateDistance = getEditDistance(queryTerm, candidate);
+          const queryLength = [...queryTerm].length;
+          const bestLengthDifference = Math.abs(
+            queryLength - [...best].length,
+          );
+          const candidateLengthDifference = Math.abs(
+            queryLength - [...candidate].length,
+          );
+          return candidateDistance < bestDistance ||
+            (candidateDistance === bestDistance &&
+              candidateLengthDifference < bestLengthDifference)
+            ? candidate
+            : best;
+        }),
+      ),
+    ),
+  ];
+}
 
 function requiredElement<T extends Element>(
   root: ParentNode,
@@ -35,23 +121,63 @@ function fillLabel(
   );
 }
 
-function getSnippet(result: StoredSearchResult, lang: Lang): string {
-  const matchedFields = Object.values(result.match).flat();
-  const source = matchedFields.includes("body")
-    ? result.body
-    : matchedFields.includes("code")
-      ? result.code
-      : result.body || result.code;
+function getSnippet(
+  result: StoredSearchResult,
+  terms: string[],
+  lang: Lang,
+): string {
+  const matchedField = getMatchedField(result);
+  const source = matchedField ? result[matchedField] : result.body || result.code;
   if (!source) return "";
 
-  const normalized = source.toLocaleLowerCase(lang);
-  const positions = result.terms
-    .map((term) => normalized.indexOf(term.toLocaleLowerCase(lang)))
-    .filter((position) => position >= 0);
-  const matchPosition = positions.length > 0 ? Math.min(...positions) : 0;
-  const start = Math.max(0, matchPosition - 80);
+  const matchPosition = getMatchPosition(source, terms, lang);
+  const start = Math.max(0, matchPosition - 24);
   const end = Math.min(source.length, matchPosition + 140);
   return `${start > 0 ? "..." : ""}${source.slice(start, end).trim()}${end < source.length ? "..." : ""}`;
+}
+
+function getClosestAnchor(
+  anchors: SearchAnchor[],
+  matchPosition: number,
+  fallback: string,
+): string {
+  let anchor = fallback;
+  for (const candidate of anchors) {
+    if (candidate.offset > matchPosition) break;
+    anchor = candidate.id;
+  }
+  return anchor;
+}
+
+function getResultUrl(
+  result: StoredSearchResult,
+  highlightTerms: string[],
+  lang: Lang,
+): string {
+  if (result.kind !== "post" || highlightTerms.length === 0) {
+    return result.url;
+  }
+
+  const url = new URL(result.url, window.location.origin);
+  for (const term of highlightTerms) {
+    url.searchParams.append("highlight", term);
+  }
+
+  const matchedField = getMatchedField(result);
+  if (!matchedField) {
+    url.hash = result.rootAnchor;
+  } else {
+    const source = result[matchedField];
+    const anchors =
+      matchedField === "body" ? result.bodyAnchors : result.codeAnchors;
+    url.hash = getClosestAnchor(
+      anchors,
+      getMatchPosition(source, highlightTerms, lang),
+      result.rootAnchor,
+    );
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function appendHighlightedText(
@@ -289,12 +415,15 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
           true,
         ) as HTMLElement | undefined;
         if (!item) continue;
+        const highlightTerms = query
+          ? getHighlightTerms(result, query, lang)
+          : [];
 
         const title = requiredElement<HTMLAnchorElement>(
           item,
           "[data-result-title]",
         );
-        title.href = result.url;
+        title.href = getResultUrl(result, highlightTerms, lang);
         title.textContent = result.title;
 
         const kind = requiredElement<HTMLElement>(item, "[data-result-kind]");
@@ -309,7 +438,11 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
           item,
           "[data-result-excerpt]",
         );
-        appendHighlightedText(excerpt, getSnippet(result, lang), result.terms);
+        appendHighlightedText(
+          excerpt,
+          getSnippet(result, highlightTerms, lang),
+          highlightTerms,
+        );
         excerpt.hidden = !excerpt.textContent;
 
         const tagList = requiredElement<HTMLElement>(item, "[data-result-tags]");

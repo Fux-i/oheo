@@ -33,6 +33,7 @@ const searchAttributes = exclusive
       "data-search-kind": "post",
       "data-search-lang": lang,
       "data-search-url": Astro.url.pathname,
+      "data-search-root-anchor": item.slug,
       "data-search-title": title,
       "data-search-date": publishedAt ?? "",
       "data-search-tags": JSON.stringify(tags),
@@ -59,7 +60,7 @@ const searchAttributes = exclusive
   >
     {
       exclusive ? (
-        <h1 id={item.slug} data-search-exclude>
+        <h1 id={item.slug} data-search-exclude data-search-highlight-title>
           {title}
         </h1>
       ) : (
@@ -199,6 +200,8 @@ const searchAttributes = exclusive
 </style>
 
 <script>
+  import "./search-highlight";
+
   document.querySelectorAll<HTMLButtonElement>(".fade-mask").forEach((mask) => {
     mask.addEventListener("click", () => {
       mask.closest(".article-wrapper")?.classList.add("expanded");
