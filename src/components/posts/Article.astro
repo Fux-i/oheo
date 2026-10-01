@@ -35,6 +35,8 @@ const searchAttributes = exclusive
       "data-search-url": Astro.url.pathname,
       "data-search-root-anchor": item.slug,
       "data-search-title": title,
+      "data-search-display-title": title,
+      "data-search-description": frontmatter.desc ?? "",
       "data-search-date": publishedAt ?? "",
       "data-search-tags": JSON.stringify(tags),
     }

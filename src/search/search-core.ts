@@ -6,6 +6,7 @@ export type SearchDocumentKind = "post" | "moment";
 
 export type SearchAnchor = {
   id: string;
+  label: string;
   offset: number;
 };
 
@@ -16,6 +17,10 @@ export type SearchDocument = {
   url: string;
   rootAnchor: string;
   title: string;
+  displayTitle: string;
+  description: string;
+  firstParagraph: string;
+  displayContent: string;
   body: string;
   bodyAnchors: SearchAnchor[];
   code: string;
@@ -31,6 +36,10 @@ export const SEARCH_STORE_FIELDS = [
   "url",
   "rootAnchor",
   "title",
+  "displayTitle",
+  "description",
+  "firstParagraph",
+  "displayContent",
   "body",
   "bodyAnchors",
   "code",
@@ -98,20 +107,53 @@ export function tokenizeSearchText(
   return [...tokens];
 }
 
-function fuzzyDistance(term: string, lang: Lang): number | false {
+export function getFuzzyEligibleTerms(
+  query: string,
+  lang: Lang,
+): ReadonlySet<string> {
+  const eligible = new Set<string>();
+  const exactOnly = new Set<string>();
+  const minimum = SITE.search.han_fuzzy_min_run_length;
+
+  for (const sequence of query.match(HAN_SEQUENCE_PATTERN) ?? []) {
+    const normalized = normalizeTerm(sequence, lang);
+    const characters = [...normalized];
+    const target = characters.length >= minimum ? eligible : exactOnly;
+
+    target.add(normalized);
+    for (let index = 0; index < characters.length - 1; index += 1) {
+      target.add(characters[index] + characters[index + 1]);
+    }
+  }
+
+  for (const term of exactOnly) eligible.delete(term);
+  return eligible;
+}
+
+function fuzzyDistance(
+  term: string,
+  lang: Lang,
+  eligibleHanTerms?: ReadonlySet<string>,
+): number | false {
   const length = [...term].length;
   if (length <= 1) return false;
 
-  if (lang === "zh" && HAN_PATTERN.test(term) && length <= 4) return 1;
+  if (lang === "zh" && HAN_PATTERN.test(term)) {
+    if (eligibleHanTerms) return eligibleHanTerms.has(term) ? 1 : false;
+    return length >= SITE.search.han_fuzzy_min_run_length ? 1 : false;
+  }
   return SITE.search.fuzzy_ratio;
 }
 
-export function getSearchOptions(lang: Lang): Options<SearchDocument> {
+export function getSearchOptions(
+  lang: Lang,
+  eligibleHanTerms?: ReadonlySet<string>,
+): Options<SearchDocument> {
   const searchOptions: SearchOptions = {
     boost: SITE.search.weights,
     combineWith: "AND",
     prefix: true,
-    fuzzy: (term) => fuzzyDistance(term, lang),
+    fuzzy: (term) => fuzzyDistance(term, lang, eligibleHanTerms),
     maxFuzzy: 2,
   };
 

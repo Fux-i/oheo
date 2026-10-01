@@ -54,6 +54,22 @@ function normalizeCode(text: string): string {
     .trim();
 }
 
+function normalizeDisplay(text: string): string {
+  return text
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function firstParagraph(body: HTMLElement): string {
+  const clean = parse(body.innerHTML);
+  for (const selector of EXCLUDED_BODY_SELECTORS) {
+    clean.querySelectorAll(selector).forEach((node) => node.remove());
+  }
+  return normalizeText(clean.querySelector("p")?.structuredText ?? "");
+}
+
 type ExtractedText = {
   text: string;
   anchors: SearchAnchor[];
@@ -86,6 +102,7 @@ function extractCode(body: HTMLElement): ExtractedText {
   const chunks: string[] = [];
   const anchors: SearchAnchor[] = [];
   let currentAnchor: string | null = null;
+  let currentLabel = "";
   let offset = 0;
 
   for (const element of body.querySelectorAll<HTMLElement>(
@@ -93,6 +110,7 @@ function extractCode(body: HTMLElement): ExtractedText {
   )) {
     if (element.tagName !== "PRE") {
       currentAnchor = getElementId(element);
+      currentLabel = normalizeText(element.structuredText);
       continue;
     }
 
@@ -100,7 +118,7 @@ function extractCode(body: HTMLElement): ExtractedText {
     if (!code) continue;
     if (chunks.length > 0) offset += 2;
     if (currentAnchor && anchors.at(-1)?.id !== currentAnchor) {
-      anchors.push({ id: currentAnchor, offset });
+      anchors.push({ id: currentAnchor, label: currentLabel, offset });
     }
     chunks.push(code);
     offset += code.length;
@@ -122,24 +140,36 @@ function extractBody(body: HTMLElement): ExtractedText {
       if (!id) return [];
 
       const marker = `__OHEO_SEARCH_ANCHOR_${index}__`;
+      const label = normalizeText(heading.structuredText);
       heading.innerHTML = marker + heading.innerHTML;
-      return [{ id, marker }];
+      return [{ id, label, marker }];
     });
   const markedText = normalizeText(clean.structuredText);
   const anchors: SearchAnchor[] = [];
   let text = "";
   let cursor = 0;
-  for (const { id, marker } of markedAnchors) {
+  for (const { id, label, marker } of markedAnchors) {
     const markerOffset = markedText.indexOf(marker, cursor);
     if (markerOffset < 0) continue;
 
     text += markedText.slice(cursor, markerOffset);
-    anchors.push({ id, offset: text.length });
+    anchors.push({ id, label, offset: text.length });
     cursor = markerOffset + marker.length;
   }
   text += markedText.slice(cursor);
 
   return { text, anchors };
+}
+
+function extractDisplayContent(body: HTMLElement): string {
+  const clean = parse(body.innerHTML);
+  for (const selector of EXCLUDED_BODY_SELECTORS.filter((selector) => selector !== ".expressive-code" && selector !== "pre")) {
+    clean.querySelectorAll(selector).forEach((node) => node.remove());
+  }
+  for (const pre of clean.querySelectorAll<HTMLElement>("pre")) {
+    pre.textContent = extractCodeBlock(pre);
+  }
+  return normalizeDisplay(clean.structuredText);
 }
 
 function parseTags(value: string | undefined): string[] {
@@ -161,7 +191,7 @@ function readDocument(element: HTMLElement): SearchDocument | null {
   const kind = element.getAttribute("data-search-kind");
   const id = element.getAttribute("data-search-id");
   const url = element.getAttribute("data-search-url");
-  const title = element.getAttribute("data-search-title");
+  const title = element.getAttribute("data-search-title") ?? "";
 
   if (
     !body ||
@@ -169,14 +199,14 @@ function readDocument(element: HTMLElement): SearchDocument | null {
     !LANGS.includes(lang) ||
     (kind !== "post" && kind !== "moment") ||
     !id ||
-    !url ||
-    !title
+    !url
   ) {
     return null;
   }
 
   const extractedBody = extractBody(body);
   const extractedCode = extractCode(body);
+  const displayContent = extractDisplayContent(body);
 
   return {
     id,
@@ -185,6 +215,13 @@ function readDocument(element: HTMLElement): SearchDocument | null {
     url,
     rootAnchor: element.getAttribute("data-search-root-anchor") ?? "",
     title,
+    displayTitle:
+      element.getAttribute("data-search-display-title") ?? title,
+    description: normalizeText(
+      element.getAttribute("data-search-description") ?? "",
+    ),
+    firstParagraph: firstParagraph(body),
+    displayContent,
     body: extractedBody.text,
     bodyAnchors: extractedBody.anchors,
     code: extractedCode.text,
