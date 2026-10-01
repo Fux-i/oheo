@@ -4,182 +4,126 @@ import { Icon } from "astro-icon/components";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
 
+interface Props {
+  instance?: string;
+}
+
+const { instance = "main" } = Astro.props;
+const idPrefix = `search-${instance}`;
 const { lang, t } = getT(Astro.currentLocale);
 ---
 
 <search-panel
   data-search-root
+  data-search-instance={idPrefix}
   data-lang={lang}
-  data-index-url={`/search-index/${lang}.json`}
+  data-index-url={`/search-index/${lang}.json?v=2`}
   data-max-results={SITE.search.max_results}
+  data-max-snippets={SITE.search.max_snippets}
   data-label-loading={t("search.loading")}
   data-label-results={t("search.result_count")}
   data-label-results-limited={t("search.result_count_limited")}
+  data-label-result-breakdown={t("search.result_breakdown")}
   data-label-empty={t("search.empty")}
   data-label-error={t("search.error")}
+  data-label-approximate-heading={t("search.approximate_heading")}
+  data-label-approximate-status={t("search.approximate_status")}
+  data-label-no-precise={t("search.no_precise")}
   data-label-post={t("search.post")}
   data-label-moment={t("search.moment")}
+  data-label-code-match={t("search.code_match")}
+  data-label-section-match={t("search.section_match")}
+  data-label-query={t("search.query_label")}
+  data-label-clear={t("search.clear")}
+  data-label-date-order={t("search.date_order")}
+  data-label-newest={t("search.newest_first")}
+  data-label-oldest={t("search.oldest_first")}
+  data-label-tags={t("search.tags_heading")}
+  data-label-filter-open={t("search.filter_open")}
+  data-label-filter-close={t("search.filter_close")}
+  data-label-tag-count={t("search.tag_count")}
   class="block"
   aria-busy="true"
 >
-  <form
-    data-search-form
-    role="search"
-    action={getRelativeLocaleUrl(lang, "search")}
-    class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,12rem)]"
-  >
-    <label class="relative block min-w-0">
-      <span class="sr-only">{t("btn.search")}</span>
-      <Icon
-        name="tabler:search"
-        class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400"
-      />
-      <input
-        data-search-query
-        type="search"
-        name="q"
-        autocomplete="off"
-        placeholder={t("search.placeholder")}
-        class="h-11 w-full rounded-lg border border-gray-300 bg-white pr-12 pl-10 text-base outline-none transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
-      />
-      <button
-        type="submit"
-        title={t("btn.search")}
-        aria-label={t("btn.search")}
-        class="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-50"
-      >
-        <Icon name="tabler:arrow-right" class="size-5" />
+  <form data-search-form role="search" action={getRelativeLocaleUrl(lang, "search")} class="block">
+    <label for={`${idPrefix}-query`} class="sr-only">{t("search.query_label")}</label>
+    <div class="relative min-w-0">
+      <Icon name="tabler:search" class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400" />
+      <input id={`${idPrefix}-query`} data-search-query type="text" name="q" autocomplete="off" placeholder={t("search.placeholder")} class="h-12 w-full rounded-lg border border-gray-300 bg-white pr-12 pl-10 text-base outline-none transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20" />
+      <button data-search-query-action type="button" title={t("search.clear")} aria-label={t("search.clear")} hidden class="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-50">
+        <Icon name="tabler:x" class="size-5" />
       </button>
-    </label>
-
-    <div data-search-tag-control class="relative w-full sm:w-auto">
-      <input
-        data-search-tag
-        name="tag"
-        type="hidden"
-        value=""
-      />
-      <button
-        data-search-tag-button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded="false"
-        disabled
-        class="flex h-10 max-w-full cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition-colors hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-wait disabled:opacity-60 sm:h-11 sm:w-full dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
-      >
-        <Icon name="tabler:tag" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
-        <span class="sr-only">{t("search.tag")}: </span>
-        <span data-search-tag-value class="min-w-0 truncate">
-          {t("search.tag_all")}
-        </span>
-        <Icon
-          data-search-tag-chevron
-          name="tabler:chevron-down"
-          class="size-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400"
-        />
-      </button>
-
-      <ul
-        data-search-tag-list
-        role="listbox"
-        aria-label={t("search.tag")}
-        hidden
-        class="absolute top-full left-0 z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-800"
-      >
-        <li role="presentation">
-          <button
-            data-search-tag-option
-            data-value=""
-            type="button"
-            role="option"
-            aria-selected="true"
-            tabindex="-1"
-            class="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none aria-selected:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-gray-700"
-          >
-            <span data-search-tag-option-label class="min-w-0 flex-1 truncate">
-              {t("search.tag_all")}
-            </span>
-            <Icon
-              data-search-tag-check
-              name="tabler:check"
-              class="size-4 shrink-0"
-            />
-          </button>
-        </li>
-      </ul>
     </div>
   </form>
 
-  <p
-    data-search-status
-    aria-live="polite"
-    class="mt-5 min-h-6 text-sm text-gray-500 dark:text-gray-400"
-  >
-    {t("search.loading")}
-  </p>
+  <button data-search-filter-toggle type="button" aria-expanded="false" aria-controls={`${idPrefix}-filters`} class="mt-4 flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-800 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+    <span data-search-filter-label>{t("search.filter_open")}</span>
+    <Icon data-search-filter-icon name="tabler:chevron-down" class="size-4" />
+  </button>
 
-  <ol data-search-results class="mt-2 grid gap-3"></ol>
+  <div id={`${idPrefix}-filters`} data-search-filters class="mt-6 grid gap-8 min-[48rem]:grid-cols-[12rem_minmax(0,1fr)] min-[48rem]:gap-8">
+    <aside aria-labelledby={`${idPrefix}-filters-heading`} class="min-w-0">
+      <h2 id={`${idPrefix}-filters-heading`} class="sr-only">{t("search.filter_open")}</h2>
+      <section aria-labelledby={`${idPrefix}-date-heading`}>
+        <h3 id={`${idPrefix}-date-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.date_order")}</h3>
+        <button data-search-sort type="button" aria-pressed="false" class="mt-3 flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 text-left text-sm text-gray-800 outline-none transition-colors hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 dark:focus:border-blue-400">
+          <span data-search-sort-label>{t("search.newest_first")}</span>
+          <Icon data-search-sort-icon name="tabler:sort-descending" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
+        </button>
+      </section>
+
+      <section aria-labelledby={`${idPrefix}-tags-heading`} class="mt-8">
+        <h3 id={`${idPrefix}-tags-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.tags_heading")}</h3>
+        <input data-search-tag type="hidden" name="tag" value="" />
+        <div data-search-tag-control class="relative mt-3">
+          <button data-search-tag-button type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls={`${idPrefix}-tag-list`} class="flex h-10 w-full items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition-colors hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:focus:border-blue-400">
+            <Icon name="tabler:tag" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
+            <span data-search-tag-value class="min-w-0 flex-1 truncate text-left">{t("search.tag_all")}</span>
+            <Icon data-search-tag-chevron name="tabler:chevron-down" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
+          </button>
+          <ul id={`${idPrefix}-tag-list`} data-search-tag-list role="listbox" aria-labelledby={`${idPrefix}-tags-heading`} class="mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1.5 dark:border-gray-700 dark:bg-gray-800">
+            <li role="presentation">
+              <button data-search-tag-option data-value="" type="button" role="option" aria-selected="true" tabindex="0" class="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 aria-selected:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-blue-950">
+                <span data-search-tag-option-label class="min-w-0 flex-1 truncate">{t("search.tag_all")}</span>
+                <span data-search-tag-option-count class="shrink-0 text-xs text-gray-500 dark:text-gray-400">0</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </aside>
+
+    <section aria-labelledby={`${idPrefix}-results-heading`} class="min-w-0">
+      <h2 id={`${idPrefix}-results-heading`} class="sr-only">{t("btn.search")}</h2>
+      <p data-search-status role="status" aria-live="polite" aria-atomic="true" class="min-h-6 text-sm text-gray-500 dark:text-gray-400">{t("search.loading")}</p>
+      <ol data-search-results class="mt-3"></ol>
+    </section>
+  </div>
 
   <template data-search-result-template>
-    <li>
-      <article
-        class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
-      >
-        <search-result-header
-          class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2"
-        >
-          <a
-            data-result-title
-            class="min-w-0 flex-1 wrap-break-word text-lg font-semibold text-gray-950 underline-offset-4 hover:text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-50 dark:hover:text-blue-300"
-          ></a>
-          <span
-            data-result-kind
-            class="shrink-0 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-          ></span>
-          <time
-            data-result-date
-            class="shrink-0 text-xs text-gray-500 dark:text-gray-400"
-          ></time>
-        </search-result-header>
-        <p
-          data-result-excerpt
-          class="mt-3 line-clamp-3 wrap-break-word text-sm leading-6 text-gray-600 dark:text-gray-300"
-        ></p>
-        <tag-list
-          data-result-tags
-          class="mt-3 flex flex-wrap gap-2 empty:hidden"
-        ></tag-list>
+    <li class="border-b border-gray-200 py-6 first:pt-0 last:border-b-0 dark:border-gray-700">
+      <article class="min-w-0">
+        <header class="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h3 class="min-w-0 flex-1 text-lg font-semibold text-gray-950 dark:text-gray-50"><a data-result-title class="wrap-break-word underline-offset-4 hover:text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-50 dark:hover:text-blue-300"></a></h3>
+          <div class="flex shrink-0 items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><span data-result-kind class="rounded-md bg-gray-100 px-2 py-0.5 font-medium dark:bg-gray-700 dark:text-gray-300"></span><time data-result-date></time></div>
+        </header>
+        <div data-result-snippets class="mt-4 grid gap-2"></div>
+        <p data-result-fallback class="mt-3 wrap-break-word text-sm leading-6 text-gray-600 dark:text-gray-300"></p>
+        <tag-list data-result-tags class="mt-3 flex flex-wrap gap-2 empty:hidden"></tag-list>
       </article>
     </li>
   </template>
 
-  <template data-search-tag-template>
-    <span
-      class="rounded-md border border-gray-200 px-2 py-0.5 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-300"
-    ></span>
+  <template data-search-snippet-template>
+    <div data-result-snippet class="min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/70">
+      <a data-result-section-link class="mb-1 flex w-fit max-w-full items-center gap-1 truncate text-xs font-semibold text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-300"><Icon data-result-code-icon name="tabler:code" class="size-3.5 shrink-0" hidden /><span data-result-section-label class="truncate"></span></a>
+      <span data-result-snippet-content class="block wrap-break-word text-sm leading-6 text-gray-700 dark:text-gray-200"></span>
+    </div>
   </template>
 
+  <template data-search-tag-template><span class="rounded-md border border-gray-200 px-2 py-0.5 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-300"></span></template>
   <template data-search-tag-option-template>
-    <li role="presentation">
-      <button
-        data-search-tag-option
-        type="button"
-        role="option"
-        aria-selected="false"
-        tabindex="-1"
-        class="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none aria-selected:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-gray-700"
-      >
-        <span
-          data-search-tag-option-label
-          class="min-w-0 flex-1 truncate"
-        ></span>
-        <Icon
-          data-search-tag-check
-          name="tabler:check"
-          class="size-4 shrink-0"
-        />
-      </button>
-    </li>
+    <li role="presentation"><button data-search-tag-option type="button" role="option" aria-selected="false" tabindex="-1" class="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 aria-selected:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:aria-selected:bg-blue-950"><span data-search-tag-option-label class="min-w-0 flex-1 truncate"></span><span data-search-tag-option-count class="shrink-0 text-xs text-gray-500 dark:text-gray-400">0</span></button></li>
   </template>
 </search-panel>
 
@@ -188,25 +132,9 @@ const { lang, t } = getT(Astro.currentLocale);
 </script>
 
 <style>
-  [data-search-query]::-webkit-search-cancel-button {
-    cursor: pointer;
-  }
-
-  [data-search-tag-button][aria-expanded="true"] [data-search-tag-chevron] {
-    transform: rotate(180deg);
-  }
-
-  [data-search-tag-option] [data-search-tag-check] {
-    opacity: 0;
-  }
-
-  [data-search-tag-option][aria-selected="true"] [data-search-tag-check] {
-    opacity: 1;
-  }
-
-  [data-result-excerpt] :global(mark) {
-    border-radius: 0.15em;
-    background: color-mix(in srgb, var(--color-yellow-300) 65%, transparent);
-    color: inherit;
-  }
+  [data-search-filter-toggle][aria-expanded="true"] [data-search-filter-icon] { transform: rotate(180deg); }
+  [data-search-tag-list][hidden] { display: none; }
+  [data-search-tag-option][aria-selected="true"] { font-weight: 600; }
+  [data-result-snippet-content] mark, [data-result-fallback] mark, [data-result-title] mark { border-radius: 0.15em; background: color-mix(in srgb, var(--color-yellow-300) 65%, transparent); color: inherit; }
+  @media (min-width: 48rem) { [data-search-filter-toggle] { display: none; } [data-search-tag-button] { display: none; } [data-search-tag-list] { display: block !important; } }
 </style>
