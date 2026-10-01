@@ -202,18 +202,18 @@ main
   h1
   search-panel
     form[role=search]                 full width
-    sort-control                     newest/oldest toggle
     search-workspace                 two columns
-      aside                          Tag heading + options
+      aside                          Date order + Tag heading/options
       section                        live status + result list
 ```
 
 Desktop requirements:
 
 - Search form occupies the full panel width.
-- The sort toggle sits below the search form and above both the Tag rail and results.
 - Workspace uses approximately `12rem minmax(0, 1fr)` with a restrained gap.
-- The Tag heading aligns vertically with the result status.
+- The left rail contains a `Date order` section followed by a `Tags` section. These headings share the same level.
+- The date-order toggle sits under `Date order` and above the Tag list, entirely within the left filter rail.
+- The `Tags` heading aligns vertically with the result status.
 - The Tag list has a bounded viewport height and its own vertical overflow.
 - Results use an ordered list with dividing rules, not floating cards.
 - Long English identifiers, URLs, CJK text, and Tags must wrap or truncate without changing grid dimensions.
@@ -223,7 +223,7 @@ Desktop requirements:
 At roughly the same width at which the Header collapses (`48rem` today):
 
 - Switch to one column.
-- Present Tags as a disclosure above the result status.
+- Present a filter disclosure above the result status containing the `Date order` control followed by the `Tags` list.
 - Reuse the same listbox DOM; do not render separate desktop and mobile option trees.
 - Bound the expanded list height and width to the viewport.
 - Use one `matchMedia` controller as the source of truth for compact versus persistent behavior.
@@ -243,7 +243,7 @@ The breakpoint may be a component-level constant. It does not need a new global 
 
 ### Date-order control
 
-- Render one icon-plus-text button directly below the search form and above the Tag/results workspace.
+- Render one icon-plus-text button inside the left filter block, under a peer-level `Date order` heading and above the peer-level `Tags` heading/list.
 - The button displays the current order (`Newest first` or `Oldest first`) and a matching directional icon; the icon is not the only indicator.
 - Default to newest-first. Omit `sort=newest` from the URL. Persist oldest-first as `sort=oldest`.
 - Changing the control updates only `sort` with `history.replaceState`, preserves `q` and `tag`, and rerenders immediately without a page reload.
@@ -274,6 +274,8 @@ Each result row contains:
 3. Zero to `SITE.search.max_snippets` match snippets.
 4. Existing Tags as compact metadata.
 
+One result remains one row even when it has several matches. Render each selected body/code window as a separate labeled snippet block beneath the shared title and metadata; do not duplicate the result title for each occurrence.
+
 Result rows are separated by a border. They do not receive their own card background, outer border, radius, or shadow.
 
 Dates should preserve their current machine-readable `datetime` value. Date-format normalization is a separate concern and is not required here.
@@ -302,6 +304,7 @@ Presentation requirements:
 - When anchor label metadata exists, render a compact section label above its snippet. Post labels are links; Moment labels are descriptive text in this scope.
 - Give code snippets a visible localized `Code` label plus an icon and monospaced text, without placing another card inside the result row.
 - Allow body and code snippets to coexist for the same result.
+- When a Post has matches under multiple headings, show multiple labeled snippet blocks in that one result row, each with its own heading link and highlighted occurrences.
 - Hide the snippet region only when no source text is available.
 - For Tag-only Posts, use the stored display description first and the first non-empty normalized body paragraph as fallback. Truncate to the configured excerpt budget only when necessary.
 - For Moments, render the complete normalized `displayContent` for both Tag-only and keyword results. Preserve authored paragraph/heading boundaries and authored code text while excluding search-excluded UI.

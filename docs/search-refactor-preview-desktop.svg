@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Oheo search desktop layout preview</title>
+  <desc id="desc">English desktop search layout with Date order and Tags sections in a left filter rail, plus one result containing multiple labeled snippets.</desc>
+  <style>
+    .sans{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.ink{fill:#172033}.muted{fill:#6b778b}.blue{fill:#1f66d1}.line{stroke:#dfe4eb;stroke-width:1}.small{font-size:15px}.body{font-size:17px}.label{font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+  </style>
+  <rect width="1600" height="1120" fill="#f5f7fa"/>
+  <rect x="54" y="38" width="1492" height="1044" rx="14" fill="#fff" stroke="#dfe4eb"/>
+  <text x="104" y="100" class="sans ink" font-size="30" font-weight="700">Search</text>
+  <text x="104" y="132" class="sans muted small">Search Posts and Moments with precise matches first.</text>
+
+  <rect x="104" y="170" width="1392" height="66" rx="10" fill="#fff" stroke="#b9c5d6" stroke-width="2"/>
+  <circle cx="137" cy="201" r="11" fill="none" stroke="#718096" stroke-width="3"/><path d="M145 209l10 10" stroke="#718096" stroke-width="3" stroke-linecap="round"/>
+  <text x="174" y="209" class="sans body muted">search</text>
+  <rect x="1424" y="185" width="42" height="36" rx="7" fill="#edf3ff"/><path d="M1437 203h16M1445 195v16" stroke="#1f66d1" stroke-width="2" stroke-linecap="round"/>
+  <line x1="104" y1="278" x2="1496" y2="278" class="line"/>
+
+  <line x1="390" y1="318" x2="390" y2="1020" class="line"/>
+  <text x="104" y="344" class="sans ink" font-size="18" font-weight="700">Date order</text>
+  <rect x="104" y="364" width="242" height="46" rx="8" fill="#fff" stroke="#c4cedb"/>
+  <path d="M130 378v18M138 378v12M146 378v6" stroke="#1f66d1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="164" y="394" class="sans ink small">Newest first</text>
+  <path d="M321 384l6 6 6-6" fill="none" stroke="#6b778b" stroke-width="2"/>
+
+  <text x="104" y="470" class="sans ink" font-size="18" font-weight="700">Tags</text>
+  <rect x="104" y="492" width="242" height="42" rx="8" fill="#edf3ff"/>
+  <text x="124" y="519" class="sans ink small" font-weight="600">All tags</text><text x="324" y="519" text-anchor="end" class="sans blue small">12</text>
+  <text x="124" y="570" class="sans ink small">Engineering</text><text x="324" y="570" text-anchor="end" class="sans muted small">8</text>
+  <text x="124" y="614" class="sans ink small">Notes</text><text x="324" y="614" text-anchor="end" class="sans muted small">5</text>
+  <text x="124" y="658" class="sans ink small">Tools</text><text x="324" y="658" text-anchor="end" class="sans muted small">3</text>
+  <text x="124" y="702" class="sans ink small">Astro</text><text x="324" y="702" text-anchor="end" class="sans muted small">2</text>
+  <text x="124" y="746" class="sans ink small">Archive</text><text x="324" y="746" text-anchor="end" class="sans muted small">0</text>
+  <text x="104" y="820" class="sans muted label">Counts follow the query</text><text x="104" y="846" class="sans muted label">Tag order stays stable</text>
+
+  <text x="430" y="344" class="sans muted small">12 results · 9 precise · 3 approximate</text>
+  <text x="1496" y="344" text-anchor="end" class="sans muted small">Newest first</text>
+  <text x="430" y="394" class="sans muted label">Precise matches</text>
+
+  <text x="430" y="442" class="sans ink" font-size="25" font-weight="700">Building a reliable search index</text>
+  <rect x="1225" y="417" width="70" height="27" rx="6" fill="#edf3ff"/><text x="1260" y="436" text-anchor="middle" class="sans blue small">POST</text>
+  <text x="1310" y="436" class="sans muted small">2026-09-18</text>
+
+  <rect x="430" y="468" width="1050" height="66" rx="8" fill="#fafbfd" stroke="#e5e9ef"/>
+  <text x="450" y="493" class="sans blue small" font-weight="700">Introduction</text><text x="450" y="518" class="sans body ink">A practical guide to <tspan fill="#172033" font-weight="700">search</tspan> architecture and relevance.</text>
+  <rect x="430" y="548" width="1050" height="66" rx="8" fill="#fafbfd" stroke="#e5e9ef"/>
+  <text x="450" y="573" class="sans blue small" font-weight="700">Ranking and filters</text><text x="450" y="598" class="sans body ink">Strict matches stay first while fuzzy <tspan fill="#172033" font-weight="700">search</tspan> remains discoverable.</text>
+  <rect x="430" y="628" width="1050" height="66" rx="8" fill="#fafbfd" stroke="#e5e9ef"/>
+  <text x="450" y="653" class="sans blue small" font-weight="700">Implementation</text><text x="450" y="678" class="sans mono body ink">const <tspan fill="#172033" font-weight="700">search</tspan> = index.query(input)</text>
+  <text x="430" y="727" class="sans muted small">Engineering   Astro   Tools</text>
+  <line x1="430" y1="764" x2="1496" y2="764" class="line"/>
+
+  <text x="430" y="812" class="sans ink" font-size="25" font-weight="700">Notes from rebuilding my writing workflow</text>
+  <rect x="1240" y="787" width="70" height="27" rx="6" fill="#edf3ff"/><text x="1275" y="806" text-anchor="middle" class="sans blue small">POST</text>
+  <text x="1325" y="806" class="sans muted small">2026-08-04</text>
+  <text x="430" y="854" class="sans body ink">A short description appears first when no body match needs a context window.</text>
+  <text x="430" y="890" class="sans muted small">Notes   Tools</text>
+  <line x1="430" y1="922" x2="1496" y2="922" class="line"/>
+
+  <text x="430" y="968" class="sans muted label">Approximate matches</text>
+  <text x="430" y="1014" class="sans ink" font-size="25" font-weight="700">A weekend with a new editor</text>
+  <rect x="1231" y="989" width="116" height="27" rx="6" fill="#f1f3f6"/><text x="1289" y="1008" text-anchor="middle" class="sans muted small">APPROXIMATE</text>
+  <text x="1362" y="1008" class="sans muted small">2026-07-12</text>
+</svg>
