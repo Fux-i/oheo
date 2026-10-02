@@ -35,7 +35,7 @@ const { lang, t } = getT(Astro.currentLocale);
   data-label-section-match={t("search.section_match")}
   data-label-query={t("search.query_label")}
   data-label-clear={t("search.clear")}
-  data-label-date-order={t("search.date_order")}
+  data-label-date-priority={t("search.date_priority")}
   data-label-newest={t("search.newest_first")}
   data-label-oldest={t("search.oldest_first")}
   data-label-tags={t("search.tags_heading")}
@@ -65,7 +65,7 @@ const { lang, t } = getT(Astro.currentLocale);
     <aside aria-labelledby={`${idPrefix}-filters-heading`} class="min-w-0">
       <h2 id={`${idPrefix}-filters-heading`} class="sr-only">{t("search.filter_open")}</h2>
       <section aria-labelledby={`${idPrefix}-date-heading`}>
-        <h3 id={`${idPrefix}-date-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.date_order")}</h3>
+        <h3 id={`${idPrefix}-date-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.date_priority")}</h3>
         <button data-search-sort type="button" aria-pressed="false" class="mt-3 flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 text-left text-sm text-gray-800 outline-none transition-colors hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 dark:focus:border-blue-400">
           <span data-search-sort-label>{t("search.newest_first")}</span>
           <Icon data-search-sort-icon name="tabler:sort-descending" class="size-4 shrink-0 text-gray-500 dark:text-gray-400" />
