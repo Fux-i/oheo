@@ -1,4 +1,4 @@
-import type MiniSearch from "minisearch";
+import MiniSearch from "minisearch";
 import type { SearchResult } from "minisearch";
 import { SITE } from "@/config";
 import {

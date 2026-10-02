@@ -336,10 +336,6 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     resultList.replaceChildren();
     updateSortButton();
 
-    if (!query && !tagInput.value) {
-      status.textContent = "";
-      return;
-    }
     if (totalCount === 0) {
       status.textContent = labels.empty;
       return;
