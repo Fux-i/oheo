@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SearchPanel from "@/components/search/SearchPanel.astro";
+import { SITE } from "@/config";
+import { getT } from "@/i18n/ui";
+
+export function getStaticPaths() {
+  return [{ params: { lang: "en" } }, { params: { lang: "zh" } }];
+}
+
+const { t } = getT(Astro.currentLocale);
+const pageWidth = "max-w-" + SITE.page_width;
+---
+
+<Layout title={t("btn.search") + t("site.title_suffix")} desc="" fillViewport>
+  <main class:list={["mx-auto w-full flex-1 px-4 py-8 sm:px-6", pageWidth]}>
+    <section aria-labelledby="search-title" class="w-full">
+      <h1
+        id="search-title"
+        class="mb-6 text-2xl font-semibold text-gray-950 dark:text-gray-50"
+      >
+        {t("btn.search")}
+      </h1>
+      <SearchPanel instance="main" />
+    </section>
+  </main>
+</Layout>

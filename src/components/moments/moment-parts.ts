@@ -8,6 +8,10 @@ export function getMomentDate(item: CollectionItem): string {
   );
 }
 
+export function getMomentAnchor(item: CollectionItem): string {
+  return `moment-${item.slug}`;
+}
+
 export function compareMoments(a: CollectionItem, b: CollectionItem): number {
   return getMomentDate(b).localeCompare(getMomentDate(a));
 }

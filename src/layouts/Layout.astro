@@ -12,9 +12,10 @@ interface Props {
   desc: string;
   image?: ImageMetadata;
   backHref?: string;
+  fillViewport?: boolean;
 }
 
-let { title, desc, image = undefined, backHref } = Astro.props;
+let { title, desc, image = undefined, backHref, fillViewport = false } = Astro.props;
 const { t } = getT(Astro.currentLocale);
 ---
 
@@ -24,7 +25,12 @@ const { t } = getT(Astro.currentLocale);
     <BaseHead title={title} desc={desc} image={image} />
     <ThemeScript />
   </head>
-  <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 pt-16">
+  <body
+    class:list={[
+      "bg-gray-100 pt-16 text-gray-900 dark:bg-gray-900 dark:text-gray-100",
+      { "flex min-h-svh flex-col": fillViewport },
+    ]}
+  >
     <Header backHref={backHref} />
     <VideoAssets>
       <slot />

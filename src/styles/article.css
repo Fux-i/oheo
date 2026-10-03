@@ -42,6 +42,18 @@
     margin-block: 1em;
   }
 
+  & :where(mark[data-search-highlight]):not(.no-article *) {
+    border-radius: 0.125rem;
+    background: #fde68a;
+    color: inherit;
+  }
+
+  :where([data-theme="dark"]) &
+    :where(mark[data-search-highlight]):not(.no-article *) {
+    background: #854d0e;
+    color: #fef3c7;
+  }
+
   & :where(a):not(.no-article *) {
     text-decoration: underline;
     text-underline-offset: 0.2em;
