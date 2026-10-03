@@ -64,7 +64,7 @@ const { lang, t } = getT(Astro.currentLocale);
   </button>
 
   <div id={`${idPrefix}-filters`} data-search-filters class="mt-6 grid gap-8 min-[48rem]:grid-cols-[12rem_minmax(0,1fr)] min-[48rem]:gap-8">
-    <aside aria-labelledby={`${idPrefix}-filters-heading`} class="min-w-0">
+    <aside aria-labelledby={`${idPrefix}-filters-heading`} class="flex min-w-0 flex-col gap-8">
       <h2 id={`${idPrefix}-filters-heading`} class="sr-only">{t("search.filter_open")}</h2>
       <section aria-labelledby={`${idPrefix}-ranking-heading`}>
         <h3 id={`${idPrefix}-ranking-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.ranking_priority")}</h3>
@@ -82,7 +82,7 @@ const { lang, t } = getT(Astro.currentLocale);
         </button>
       </section>
 
-      <section aria-labelledby={`${idPrefix}-tags-heading`} class="mt-8">
+      <section aria-labelledby={`${idPrefix}-tags-heading`}>
         <h3 id={`${idPrefix}-tags-heading`} class="text-sm font-semibold text-gray-950 dark:text-gray-50">{t("search.tags_heading")}</h3>
         <input data-search-tag type="hidden" name="tag" value="" />
         <div data-search-tag-control class="relative mt-3">
