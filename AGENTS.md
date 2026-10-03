@@ -66,7 +66,7 @@ Use the `@/*` alias for imports from `src/*`.
 
 - `author` and `favicon`
 - `header_width`, `header_collapse_width`, and `page_width`
-- `search.max_results`, `search.fuzzy_ratio`, and per-field search weights
+- Search ranking priority, result/snippet limits, fuzzy settings, date boost, and per-field weights under `search`
 - navigation entries as `{ key, href }`
 - social entries as `{ name, href, key, icon }`
 
@@ -231,7 +231,7 @@ Markdown asset rules:
 
 ## Search System
 
-Search is a dedicated page at `/[lang]/search?q=&tag=`. The header links to it from both desktop and mobile navigation; it is not a modal. Query and Tag state live in the URL, update without a page reload, and are restored on browser history changes.
+Search is a dedicated page at `/[lang]/search?q=&tag=&sort=&rank=`. The header links to it from both desktop and mobile navigation; it is not a modal. Query, Tag, Date priority, and Ranking priority state live in the URL, update without a page reload, and are restored on browser history changes. Default values are omitted: `sort=oldest` selects oldest-first, while `rank` is present only when the selected ranking differs from `SITE.search.ranking_priority`.
 
 Search is intentionally build-dependent:
 
@@ -248,12 +248,14 @@ Rendered content opts into indexing through a small DOM contract:
 
 `search-core.ts` is shared by index generation and the browser client. Keep its fields, stored fields, tokenizer, normalization, boosts, prefix matching, and fuzzy settings synchronized by reusing `getSearchOptions()` rather than duplicating MiniSearch options.
 
-- Indexed fields are `title`, `body`, and `code`; their weights and result cap come from `SITE.search`.
+- Indexed fields are `title`, `body`, and `code`; their weights, result/snippet limits, fuzzy behavior, date boost, and default Ranking priority come from `SITE.search`.
 - Matching combines terms with `AND`, supports prefixes and fuzzy matches, and caps fuzzy edit distance at two. One-character terms are not fuzzy-matched.
-- Chinese tokenization uses `Intl.Segmenter` plus Han-character tokens and overlapping bigrams. Short Chinese queries use an edit distance of one so minor character errors can still match without making single-character searches noisy.
-- Results sort by relevance score, then date descending, then localized title. Snippets prefer the matched body or code field and highlight matched terms.
+- Chinese tokenization uses `Intl.Segmenter` plus Han-character tokens and overlapping bigrams. Han fuzzy matching uses an edit distance of one only when the originating Han run reaches `search.han_fuzzy_min_run_length`; shorter runs remain exact-only.
+- Strict matches always precede deduplicated fuzzy-only matches. Facet counts use both tiers before the active Tag filter is applied.
+- Date ranking is the default. It sorts each tier by the selected date direction, places dated results before undated results, and preserves corpus insertion order for equal dates. Relevance ranking uses MiniSearch score plus the configured bounded date boost and deterministic tie-breakers. An empty text query always uses Date ranking while preserving the selected Ranking priority in the controls and URL.
+- Post results can show multiple bounded body/code snippets with matched terms highlighted. Tag-only and title-only Posts fall back to description, then the first paragraph. Moment results show complete normalized authored content.
 
-Tag filtering is exact and independent of the text query. The custom Tag list contains tags from the current language index, ordered by document frequency descending and then locale-aware alphabetical order. Count each Tag at most once per document. Preserve its listbox semantics, keyboard navigation, focus behavior, scrolling limit, mobile width containment, and `dismissible.ts` outside-pointer/focus dismissal when changing it.
+Tag filtering is exact and independent of the text query. The custom Tag list contains tags from the current language index, ordered by document frequency descending and then locale-aware alphabetical order. Count each Tag at most once per document. The list intentionally grows without a fixed height or internal scrolling. Preserve its listbox semantics, keyboard navigation, focus behavior, mobile width containment, and `dismissible.ts` outside-pointer/focus dismissal when changing it.
 
 Search UI labels belong in both dictionaries in `src/i18n/ui.ts`. `SearchPanel.astro` owns the rendered controls/templates and responsive styling; `search-client.ts` owns index loading, URL state, searching, filtering, snippets, result rendering, and Tag-menu interaction.
 
