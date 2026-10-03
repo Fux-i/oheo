@@ -10,9 +10,13 @@ import {
   getSnippets,
   getTagFacets,
   rankSearchResults,
+  readSearchPriority,
   readSearchSort,
   searchResultSets,
+  writeSearchPriority,
+  writeSearchSort,
   type SearchSnippet,
+  type SearchPriority,
   type SearchSort,
   type StoredSearchResult,
 } from "./search-parts";
@@ -34,6 +38,8 @@ type SearchLabels = {
   clear: string;
   newest: string;
   oldest: string;
+  priorityDate: string;
+  priorityRelevance: string;
   filterOpen: string;
   filterClose: string;
   tagCount: string;
@@ -65,6 +71,8 @@ function readLabels(root: HTMLElement): SearchLabels {
     clear: root.dataset.labelClear ?? "Clear search",
     newest: root.dataset.labelNewest ?? "Newest first",
     oldest: root.dataset.labelOldest ?? "Oldest first",
+    priorityDate: root.dataset.labelPriorityDate ?? "Date",
+    priorityRelevance: root.dataset.labelPriorityRelevance ?? "Relevance",
     filterOpen: root.dataset.labelFilterOpen ?? "Show search filters",
     filterClose: root.dataset.labelFilterClose ?? "Hide search filters",
     tagCount: root.dataset.labelTagCount ?? "{tag}, {count} results",
@@ -141,6 +149,9 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
   const sortButton = requiredElement<HTMLButtonElement>(root, "[data-search-sort]");
   const sortLabel = requiredElement<HTMLElement>(root, "[data-search-sort-label]");
   const sortIcon = requiredElement<HTMLElement>(root, "[data-search-sort-icon]");
+  const priorityButton = requiredElement<HTMLButtonElement>(root, "[data-search-priority]");
+  const priorityLabel = requiredElement<HTMLElement>(root, "[data-search-priority-label]");
+  const priorityIcon = requiredElement<HTMLElement>(root, "[data-search-priority-icon]");
   const filterToggle = requiredElement<HTMLButtonElement>(root, "[data-search-filter-toggle]");
   const filterAside = requiredElement<HTMLElement>(root, "[data-search-filters] > aside");
   const filterLabel = requiredElement<HTMLElement>(root, "[data-search-filter-label]");
@@ -158,10 +169,12 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
   const media = window.matchMedia("(min-width: 48rem)");
   let compactMode = !media.matches;
   let sort: SearchSort = "newest";
+  let priority: SearchPriority = "date";
   let filterOpen = false;
   let tagMenuOpen = false;
   let inputTimer: ReturnType<typeof setTimeout> | undefined;
   let index: MiniSearch<SearchDocument>;
+  let indexOrder = new Map<string, number>();
 
   const getOptions = () => Array.from(tagList.querySelectorAll<HTMLButtonElement>("[data-search-tag-option]"));
   const compact = () => !media.matches;
@@ -248,6 +261,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     queryInput.value = params.get("q") ?? "";
     tagInput.value = params.get("tag") ?? "";
     sort = readSearchSort(params.get("sort"));
+    priority = readSearchPriority(params.get("rank"));
     updateTagSelection();
   };
 
@@ -258,8 +272,8 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     else url.searchParams.delete("q");
     if (tagInput.value) url.searchParams.set("tag", tagInput.value);
     else url.searchParams.delete("tag");
-    if (sort === "oldest") url.searchParams.set("sort", "oldest");
-    else url.searchParams.delete("sort");
+    writeSearchSort(url, sort);
+    writeSearchPriority(url, priority);
     window.history.replaceState(null, "", url);
   };
 
@@ -270,6 +284,15 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     sortButton.setAttribute("aria-label", newest ? labels.newest : labels.oldest);
     sortIcon.setAttribute("data-sort", sort);
     sortIcon.setAttribute("aria-label", newest ? labels.newest : labels.oldest);
+  };
+
+  const updatePriorityButton = () => {
+    const useRelevance = priority === "relevance";
+    priorityLabel.textContent = useRelevance ? labels.priorityRelevance : labels.priorityDate;
+    priorityButton.setAttribute("aria-pressed", String(useRelevance));
+    priorityButton.setAttribute("aria-label", useRelevance ? labels.priorityRelevance : labels.priorityDate);
+    priorityIcon.setAttribute("data-priority", priority);
+    priorityIcon.setAttribute("aria-label", useRelevance ? labels.priorityRelevance : labels.priorityDate);
   };
 
   const addTagOptions = (corpus: StoredSearchResult[]) => {
@@ -329,12 +352,14 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     const unfiltered = searchResultSets(index, query, lang);
     updateFacetCounts(unfiltered);
     const filtered = filterSearchResults(unfiltered, tagInput.value);
-    const ranked = rankSearchResults(filtered, sort).slice(0, maxResults);
+    const effectivePriority = query ? priority : "date";
+    const ranked = rankSearchResults(filtered, { sort, priority: effectivePriority, indexOrder }).slice(0, maxResults);
     const preciseCount = filtered.precise.length;
     const approximateCount = filtered.approximate.length;
     const totalCount = preciseCount + approximateCount;
     resultList.replaceChildren();
     updateSortButton();
+    updatePriorityButton();
 
     if (totalCount === 0) {
       status.textContent = labels.empty;
@@ -393,7 +418,9 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     const response = await fetch(indexUrl);
     if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
     index = await MiniSearch.loadJSONAsync<SearchDocument>(await response.text(), getSearchOptions(lang));
-    addTagOptions(index.search(MiniSearch.wildcard) as StoredSearchResult[]);
+    const corpus = index.search(MiniSearch.wildcard) as StoredSearchResult[];
+    indexOrder = new Map(corpus.map((result, position) => [String(result.id), position]));
+    addTagOptions(corpus);
     root.setAttribute("aria-busy", "false");
     syncResponsiveMode();
 
@@ -425,6 +452,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     });
     filterToggle.addEventListener("click", () => setFilterOpen(!filterOpen));
     sortButton.addEventListener("click", () => { sort = sort === "newest" ? "oldest" : "newest"; writeUrlState(); render(); });
+    priorityButton.addEventListener("click", () => { priority = priority === "date" ? "relevance" : "date"; writeUrlState(); render(); });
     tagButton.addEventListener("click", () => setTagMenuOpen(!tagMenuOpen, true));
     tagButton.addEventListener("keydown", (event) => {
       if (!compact() || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;

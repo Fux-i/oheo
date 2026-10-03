@@ -12,6 +12,7 @@ import type { Lang } from "@/i18n/ui";
 
 export type StoredSearchResult = SearchResult & Omit<SearchDocument, "id">;
 export type SearchSort = "newest" | "oldest";
+export type SearchPriority = "date" | "relevance";
 export type SearchTier = "precise" | "approximate";
 
 export type RankedSearchResult = StoredSearchResult & {
@@ -59,6 +60,15 @@ export function writeSearchSort(url: URL, sort: SearchSort): void {
   else url.searchParams.delete("sort");
 }
 
+export function readSearchPriority(value: string | null): SearchPriority {
+  return value === "relevance" ? "relevance" : "date";
+}
+
+export function writeSearchPriority(url: URL, priority: SearchPriority): void {
+  if (priority === "relevance") url.searchParams.set("rank", "relevance");
+  else url.searchParams.delete("rank");
+}
+
 function getDateRank(
   results: StoredSearchResult[],
   sort: SearchSort,
@@ -94,17 +104,27 @@ function dateCompare(
   return 0;
 }
 
+export type SearchRankOptions = {
+  sort: SearchSort;
+  priority: SearchPriority;
+  indexOrder?: ReadonlyMap<string, number>;
+  dateBoost?: number;
+};
+
 export function rankSearchResults(
   sets: SearchResultSets,
-  sort: SearchSort,
-  dateBoost = SITE.search.date_boost,
+  options: SearchRankOptions,
 ): RankedSearchResult[] {
+  const { sort, priority, indexOrder, dateBoost = SITE.search.date_boost } = options;
   const all = [
     ...sets.precise.map((result) => ({ result, tier: "precise" as const })),
     ...sets.approximate.map((result) => ({ result, tier: "approximate" as const })),
   ];
   const rankByDate = getDateRank(all.map(({ result }) => result), sort);
   const tierRank = { precise: 0, approximate: 1 } as const;
+  const fallbackOrder = new Map(all.map(({ result }, index) => [String(result.id), index]));
+  const getIndexOrder = (result: StoredSearchResult): number =>
+    indexOrder?.get(String(result.id)) ?? fallbackOrder.get(String(result.id)) ?? Number.MAX_SAFE_INTEGER;
 
   return all
     .map(({ result, tier }) => ({
@@ -114,13 +134,20 @@ export function rankSearchResults(
         result.score + (result.date ? dateBoost * (rankByDate.get(result.date) ?? 0) : 0),
     }))
     .sort((left, right) => {
+      const tier = tierRank[left.tier] - tierRank[right.tier];
+      if (tier !== 0) return tier;
+
+      if (priority === "date") {
+        return dateCompare(left, right, sort) || getIndexOrder(left) - getIndexOrder(right);
+      }
+
       return (
-        tierRank[left.tier] - tierRank[right.tier] ||
         (left.date ? 0 : 1) - (right.date ? 0 : 1) ||
         right.combinedScore - left.combinedScore ||
         right.score - left.score ||
         dateCompare(left, right, sort) ||
-        left.displayTitle.localeCompare(right.displayTitle)
+        left.displayTitle.localeCompare(right.displayTitle) ||
+        getIndexOrder(left) - getIndexOrder(right)
       );
     });
 }
