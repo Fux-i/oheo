@@ -7,7 +7,7 @@
 
 ## Summary
 
-Refactor the existing static, bilingual search page into a full-width search bar, a date-order toggle, a persistent desktop Tag rail, and a divided results list. Results should show every visible match with semantic highlighting and may show several distinct match snippets from the same document.
+Refactor the existing static, bilingual search page into a full-width search bar, Ranking priority and Date priority toggles, a persistent desktop Tag rail, and a divided results list. Results should show every visible match with semantic highlighting and may show several distinct match snippets from the same document.
 
 The refactor should keep the current Astro + MiniSearch architecture. The reference site uses Pagefind and demonstrates the desired interaction well. Pagefind can support independent records, filters, multilingual indexes, weighted regions, highlighted excerpts, and heading sub-results, but adopting it would be an engine migration alongside the UI refactor. Keeping MiniSearch is the smaller change and preserves Oheo's existing stored-field, typo-fallback, and destination-link contracts while fixing the confirmed relevance defect directly.
 
@@ -73,7 +73,7 @@ The current highlight mapper then selects one nearest returned index term for th
 
 | Area | Current | Target |
 | --- | --- | --- |
-| Search controls | Query input and Tag dropdown share one row | Full-width query bar with date-order toggle above the workspace |
+| Search controls | Query input and Tag dropdown share one row | Full-width query bar with ranking and date priority toggles above the workspace |
 | Tags | Compact popover, counts computed but discarded | Persistent left rail on desktop with visible counts |
 | Mobile tags | Full-width popover | Compact disclosure using the same option list |
 | Results | Independent bordered cards | Unframed editorial list separated by rules |
@@ -97,7 +97,7 @@ The following choices are settled for implementation:
 - Show one result per document with multiple bounded snippets. Titles are highlighted separately and do not consume the snippet limit.
 - For Tag-only Post results, show description first, then first non-empty paragraph. For keyword Post results with no body/code match (including title-only matches), use the same fallback. Keep description display-only, not searchable.
 - For Moment results, search body only; show complete normalized authored content for Tag-only and keyword matches. Synthetic `Moment · date` labels remain display-only result metadata and do not participate in matching or highlighting.
-- Keep date ordering, query, and Tag state shareable through the URL; browser history restores all three.
+- Keep ranking priority, date priority, query, and Tag state shareable through the URL; browser history restores them all.
 - Add focused Vitest coverage for pure search helpers; use the existing development server for browser verification.
 
 ### Reference findings
@@ -177,8 +177,9 @@ These product decisions have been confirmed and are normative.
 | Tag ordering | Keep corpus document frequency descending, then locale collation | Prevents the list from jumping after every keystroke |
 | Fuzzy behavior | Show strict results before deduplicated fuzzy-only results | Preserves typo discovery without allowing approximate matches to outrank precise matches |
 | Short Han fuzzy behavior | Disable fuzzy matching for tokens emitted from Han runs shorter than the configured threshold, which must be at least three | Directly fixes the confirmed `网易` failure mode without disabling longer-Han fallback |
-| Date order | Default newest first; allow oldest first within each precision tier | Gives the user direct chronological control without allowing fuzzy results to outrank strict results |
-| Date influence | Add a small configurable normalized date boost to relevance within a tier | Gives newer documents modest priority while keeping textual relevance dominant |
+| Ranking priority | Default to `Date`; allow `Relevance` as an explicit alternative | Makes the date control visibly authoritative while preserving the existing relevance model for users who want it |
+| Date priority | Default newest first; within each precision tier, sort strictly by date and preserve index order for equal dates | Gives the user direct chronological control without allowing fuzzy results to outrank strict results |
+| Relevance priority | Preserve MiniSearch score plus the small configurable normalized date boost within each precision tier | Keeps the previous ranking available without making its score differences surprising when users choose Date |
 | Tag-only Post excerpt | Description, then first non-empty paragraph | Uses authored summary content before body fallback |
 | Moment excerpt | Complete normalized Moment content; searchable body only | Moments are short, content-first entries and have no searchable title |
 | Tests | Add minimal Vitest coverage for pure search logic | Makes tiering, date boost, snippets, facets, and URL state deterministic to verify |
@@ -203,7 +204,7 @@ main
   search-panel
     form[role=search]                 full width
     search-workspace                 two columns
-      aside                          Date order + Tag heading/options
+      aside                          Ranking priority + Date priority + Tags
       section                        live status + result list
 ```
 
@@ -211,10 +212,10 @@ Desktop requirements:
 
 - Search form occupies the full panel width.
 - Workspace uses approximately `12rem minmax(0, 1fr)` with a restrained gap.
-- The left rail contains a `Date order` section followed by a `Tags` section. These headings share the same level.
-- The date-order toggle sits under `Date order` and above the Tag list, entirely within the left filter rail.
+- The left rail contains `Ranking priority`, `Date priority`, and `Tags` sections. These headings share the same level.
+- The ranking-priority toggle sits above the date-priority toggle; both controls are entirely within the left filter rail.
 - The `Tags` heading aligns vertically with the result status.
-- The Tag list has a bounded viewport height and its own vertical overflow.
+- The Tag list grows to show all available Tags; it must not impose a fixed height or internal scrolling.
 - Results use an ordered list with dividing rules, not floating cards.
 - Long English identifiers, URLs, CJK text, and Tags must wrap or truncate without changing grid dimensions.
 
@@ -223,9 +224,9 @@ Desktop requirements:
 At roughly the same width at which the Header collapses (`48rem` today):
 
 - Switch to one column.
-- Present a filter disclosure above the result status containing the `Date order` control followed by the `Tags` list.
+- Present a filter disclosure above the result status containing the `Ranking priority`, `Date priority`, and `Tags` controls.
 - Reuse the same listbox DOM; do not render separate desktop and mobile option trees.
-- Bound the expanded list height and width to the viewport.
+- Keep the expanded list width contained by the viewport without imposing a fixed height.
 - Use one `matchMedia` controller as the source of truth for compact versus persistent behavior.
 - In compact mode, the trigger controls the list. Selection and Escape close it and return focus to the trigger. Focus-loss dismissal leaves the already-moved focus alone. Outside-pointer dismissal must not preempt the pointer's normal focus behavior; after that behavior, return focus to the trigger only if focus would otherwise remain inside the now-hidden list.
 - In persistent desktop mode, remove the trigger from both display and the accessibility tree, keep the list visible, and disable outside-pointer/focus-loss dismissal.
@@ -241,9 +242,17 @@ The breakpoint may be a component-level constant. It does not need a new global 
 - If the custom clear action is approved, suppress the native search cancel control. Clearing cancels the pending debounce, removes only `q`, preserves the selected Tag, updates the URL and results immediately, and returns focus to the input.
 - Live input remains debounced.
 
-### Date-order control
+### Ranking-priority control
 
-- Render one icon-plus-text button inside the left filter block, under a peer-level `Date order` heading and above the peer-level `Tags` heading/list.
+- Render one icon-plus-text button under a peer-level `Ranking priority` heading and above the `Date priority` heading.
+- The button cycles between `Date` and `Relevance`, displays the active value, and uses `aria-pressed` with a localized accessible name.
+- Default to `Date`. Omit `rank` from the URL for Date and persist `rank=relevance` for Relevance.
+- Changing the control updates only `rank` with `history.replaceState`, preserves `q`, `tag`, and `sort`, and rerenders immediately without a page reload.
+- With an empty query, ignore this policy for ranking and always use the Date policy; the selected URL state may remain visible.
+
+### Date-priority control
+
+- Render one icon-plus-text button inside the left filter block, under a peer-level `Date priority` heading and above the peer-level `Tags` heading/list.
 - The button displays the current order (`Newest first` or `Oldest first`) and a matching directional icon; the icon is not the only indicator.
 - Default to newest-first. Omit `sort=newest` from the URL. Persist oldest-first as `sort=oldest`.
 - Changing the control updates only `sort` with `history.replaceState`, preserves `q` and `tag`, and rerenders immediately without a page reload.
@@ -329,11 +338,13 @@ For a non-empty query:
 3. Classify every document into the strict tier when every query term has a strict match; otherwise classify it as fuzzy-only only when it has a fuzzy match and is not already strict.
 4. Compute Tag counts from the union of deduplicated strict and fuzzy-only candidates before applying the active Tag.
 5. Apply the exact active Tag to both tiers. A zero-count Tag remains empty; it does not alter tier classification.
-6. Rank each tier with the combined score below, cap the complete ordered list at `SITE.search.max_results`, and report uncapped strict/fuzzy totals.
+6. Rank each tier using the active Ranking priority policy, cap the complete ordered list at `SITE.search.max_results`, and report uncapped strict/fuzzy totals.
 
 This preserves typo discovery while making precision a hard ordering boundary. A document with both strict and fuzzy matches belongs entirely to the strict tier.
 
-Within each tier, calculate:
+When Ranking priority is `Date`, sort each tier by date direction, placing dated results before undated results and preserving corpus index insertion order for equal dates. Ignore MiniSearch score, term frequency, field weights, body-length normalization, and date boost.
+
+When Ranking priority is `Relevance`, calculate:
 
 `combined = MiniSearch score + date_boost × normalized date rank`
 
@@ -496,7 +507,7 @@ Do not turn this into a generic utility package. It is adjacent search logic for
 6. Use an ordered result list and one `h2` per result.
 7. Preserve listbox/option single-selection semantics, `aria-selected`, exactly one roving tab stop, and the keyboard contract above.
 8. Use instance-unique ids for every label/control relationship.
-9. Give Tag counts localized accessible names, date-order state an accessible button name, and code matches a visible textual label.
+9. Give Tag counts localized accessible names, ranking/date priority states accessible button names, and code matches a visible textual label.
 10. Preserve visible focus rings in both themes.
 11. Use semantic `<mark>` inside links where applicable and meet readable foreground/background contrast in light and dark modes.
 12. Do not communicate match field or selection through color alone.
@@ -549,7 +560,7 @@ Exit criterion: every existing document still loads, and stored anchors provide 
 ### Phase 3: Layout and rendering
 
 1. Move the query bar above the workspace.
-2. Add the date-order toggle below the query bar and wire its URL state.
+2. Add the Ranking priority and Date priority toggles below the query bar and wire their URL state.
 3. Build the persistent desktop Tag rail and compact disclosure from one DOM tree.
 4. Render union strict/fuzzy counts without reordering the rail.
 5. Replace cards with divided semantic result rows and the approximate divider.
@@ -577,20 +588,21 @@ Exit criterion: every acceptance criterion below is evidenced.
 - **SRCH-05:** A fixture containing a Han run at or above the configured threshold with one substituted character exercises and passes the query-aware fuzzy tier; a duplicated token with short-run provenance remains exact-only.
 - **SRCH-06:** Title, body, and code weights still come from `SITE.search.weights`; Moment display titles do not participate in matching.
 - **SRCH-07:** Strict/fuzzy tier classification and union facet counts are computed before exact Tag filtering. A zero-count Tag remains empty and does not alter tier classification.
-- **SRCH-08:** Within a tier, the bounded date boost influences order without allowing date to override a materially stronger textual match; oldest-first reverses only date influence.
+- **SRCH-08:** Date priority sorts each tier strictly by the selected date direction and preserves corpus index order for equal dates; Relevance priority preserves the bounded date boost and existing deterministic relevance tie-breakers.
 
 ### Presentation
 
-- **SRCH-09:** The search bar spans the panel above the date toggle, Tags, and results.
-- **SRCH-10:** The date toggle displays current order, defaults to newest-first, persists only `sort=oldest`, and updates without reload.
-- **SRCH-11:** At desktop width, Tags form a persistent left rail and results occupy the flexible right column.
-- **SRCH-12:** At compact width, Tags use one bounded disclosure above results without duplicate option DOM.
-- **SRCH-13:** Results are separated rows rather than cards.
-- **SRCH-14:** All visible strict or accepted approximate occurrences in titles and snippets are wrapped in semantic marks; title marks remain inside the title link.
-- **SRCH-15:** A result with separated matches can render multiple distinct Post body/code snippets up to the configured limit; title matching does not consume that limit.
-- **SRCH-16:** Body and code snippets can both render for one Post, and code matches have a localized textual cue.
-- **SRCH-17:** For a Post with matches under two headings, the title link uses the highest-ranked visible anchored snippet and each section label uses its own anchor, with the same bounded highlight parameters.
-- **SRCH-18:** Tag-only Posts use description then first paragraph; Moments use complete normalized `displayContent`; synthetic Moment labels are never highlighted.
+- **SRCH-09:** The search bar spans the panel above the ranking priority, date priority, Tags, and results.
+- **SRCH-10:** The Date priority toggle displays current order, defaults to newest-first, persists only `sort=oldest`, and updates without reload.
+- **SRCH-11:** The Ranking priority toggle displays `Date` or `Relevance`, defaults to Date, persists only `rank=relevance` for Relevance, and updates without reload.
+- **SRCH-12:** At desktop width, Tags form a persistent left rail and results occupy the flexible right column.
+- **SRCH-13:** At compact width, Tags use one disclosure above results without duplicate option DOM.
+- **SRCH-14:** Results are separated rows rather than cards.
+- **SRCH-15:** All visible strict or accepted approximate occurrences in titles and snippets are wrapped in semantic marks; title marks remain inside the title link.
+- **SRCH-16:** A result with separated matches can render multiple distinct Post body/code snippets up to the configured limit; title matching does not consume that limit.
+- **SRCH-17:** Body and code snippets can both render for one Post, and code matches have a localized textual cue.
+- **SRCH-18:** For a Post with matches under two headings, the title link uses the highest-ranked visible anchored snippet and each section label uses its own anchor, with the same bounded highlight parameters.
+- **SRCH-19:** Tag-only Posts use description then first paragraph; Moments use complete normalized `displayContent`; synthetic Moment labels are never highlighted.
 
 ### Tags and state
 
