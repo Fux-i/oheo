@@ -5,6 +5,7 @@ export const SITE = {
   header_collapse_width: "48rem",
   page_width: "5xl",
   search: {
+    ranking_priority: "date",
     max_results: 30,
     max_snippets: 3,
     snippet_context: 72,

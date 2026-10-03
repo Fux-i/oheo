@@ -8,7 +8,7 @@ import {
   type SearchAnchor,
   type SearchDocument,
 } from "./search-core";
-import { type Lang } from "../i18n/ui";
+import type { Lang } from "@/i18n/ui";
 
 const LANGS: Lang[] = ["en", "zh"];
 const EXCLUDED_BODY_SELECTORS = [
@@ -46,15 +46,7 @@ function normalizeText(text: string): string {
   return text.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function normalizeCode(text: string): string {
-  return text
-    .replace(/\u00a0/g, " ")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function normalizeDisplay(text: string): string {
+function normalizeMultilineText(text: string): string {
   return text
     .replace(/\u00a0/g, " ")
     .replace(/[ \t]+\n/g, "\n")
@@ -91,7 +83,7 @@ function extractCodeBlock(pre: HTMLElement): string {
     expressiveCodeLines.length > 0
       ? expressiveCodeLines
       : clean.querySelectorAll(".line");
-  return normalizeCode(
+  return normalizeMultilineText(
     lines.length > 0
       ? lines.map((line) => line.text).join("\n")
       : clean.structuredText,
@@ -169,7 +161,7 @@ function extractDisplayContent(body: HTMLElement): string {
   for (const pre of clean.querySelectorAll<HTMLElement>("pre")) {
     pre.textContent = extractCodeBlock(pre);
   }
-  return normalizeDisplay(clean.structuredText);
+  return normalizeMultilineText(clean.structuredText);
 }
 
 function parseTags(value: string | undefined): string[] {

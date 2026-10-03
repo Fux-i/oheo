@@ -12,7 +12,7 @@ const { t } = getT(Astro.currentLocale);
 const pageWidth = "max-w-" + SITE.page_width;
 ---
 
-<Layout title={t("btn.search") + t("site.title_suffix")} desc="">
+<Layout title={t("btn.search") + t("site.title_suffix")} desc="" fillViewport>
   <main class:list={["mx-auto w-full flex-1 px-4 py-8 sm:px-6", pageWidth]}>
     <section aria-labelledby="search-title" class="w-full">
       <h1
@@ -21,15 +21,7 @@ const pageWidth = "max-w-" + SITE.page_width;
       >
         {t("btn.search")}
       </h1>
-      <SearchPanel />
+      <SearchPanel instance="main" />
     </section>
   </main>
 </Layout>
-
-<style>
-  :global(body) {
-    display: flex;
-    min-height: 100svh;
-    flex-direction: column;
-  }
-</style>

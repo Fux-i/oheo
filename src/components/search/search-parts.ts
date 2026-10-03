@@ -12,7 +12,7 @@ import type { Lang } from "@/i18n/ui";
 
 export type StoredSearchResult = SearchResult & Omit<SearchDocument, "id">;
 export type SearchSort = "newest" | "oldest";
-export type SearchPriority = "date" | "relevance";
+export type SearchRankingPriority = "date" | "relevance";
 export type SearchTier = "precise" | "approximate";
 
 export type RankedSearchResult = StoredSearchResult & {
@@ -60,13 +60,20 @@ export function writeSearchSort(url: URL, sort: SearchSort): void {
   else url.searchParams.delete("sort");
 }
 
-export function readSearchPriority(value: string | null): SearchPriority {
-  return value === "relevance" ? "relevance" : "date";
+export function readSearchRankingPriority(
+  value: string | null | undefined,
+  fallback: SearchRankingPriority = SITE.search.ranking_priority,
+): SearchRankingPriority {
+  return value === "date" || value === "relevance" ? value : fallback;
 }
 
-export function writeSearchPriority(url: URL, priority: SearchPriority): void {
-  if (priority === "relevance") url.searchParams.set("rank", "relevance");
-  else url.searchParams.delete("rank");
+export function writeSearchRankingPriority(
+  url: URL,
+  rankingPriority: SearchRankingPriority,
+  defaultRankingPriority: SearchRankingPriority = SITE.search.ranking_priority,
+): void {
+  if (rankingPriority === defaultRankingPriority) url.searchParams.delete("rank");
+  else url.searchParams.set("rank", rankingPriority);
 }
 
 function getDateRank(
@@ -106,7 +113,7 @@ function dateCompare(
 
 export type SearchRankOptions = {
   sort: SearchSort;
-  priority: SearchPriority;
+  rankingPriority: SearchRankingPriority;
   indexOrder?: ReadonlyMap<string, number>;
   dateBoost?: number;
 };
@@ -115,7 +122,7 @@ export function rankSearchResults(
   sets: SearchResultSets,
   options: SearchRankOptions,
 ): RankedSearchResult[] {
-  const { sort, priority, indexOrder, dateBoost = SITE.search.date_boost } = options;
+  const { sort, rankingPriority, indexOrder, dateBoost = SITE.search.date_boost } = options;
   const all = [
     ...sets.precise.map((result) => ({ result, tier: "precise" as const })),
     ...sets.approximate.map((result) => ({ result, tier: "approximate" as const })),
@@ -137,7 +144,7 @@ export function rankSearchResults(
       const tier = tierRank[left.tier] - tierRank[right.tier];
       if (tier !== 0) return tier;
 
-      if (priority === "date") {
+      if (rankingPriority === "date") {
         return dateCompare(left, right, sort) || getIndexOrder(left) - getIndexOrder(right);
       }
 

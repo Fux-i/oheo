@@ -10,13 +10,13 @@ import {
   getSnippets,
   getTagFacets,
   rankSearchResults,
-  readSearchPriority,
+  readSearchRankingPriority,
   readSearchSort,
   searchResultSets,
-  writeSearchPriority,
+  writeSearchRankingPriority,
   writeSearchSort,
+  type SearchRankingPriority,
   type SearchSnippet,
-  type SearchPriority,
   type SearchSort,
   type StoredSearchResult,
 } from "./search-parts";
@@ -38,8 +38,8 @@ type SearchLabels = {
   clear: string;
   newest: string;
   oldest: string;
-  priorityDate: string;
-  priorityRelevance: string;
+  rankingDate: string;
+  rankingRelevance: string;
   filterOpen: string;
   filterClose: string;
   tagCount: string;
@@ -71,8 +71,8 @@ function readLabels(root: HTMLElement): SearchLabels {
     clear: root.dataset.labelClear ?? "Clear search",
     newest: root.dataset.labelNewest ?? "Newest first",
     oldest: root.dataset.labelOldest ?? "Oldest first",
-    priorityDate: root.dataset.labelPriorityDate ?? "Date",
-    priorityRelevance: root.dataset.labelPriorityRelevance ?? "Relevance",
+    rankingDate: root.dataset.labelRankingDate ?? "Date",
+    rankingRelevance: root.dataset.labelRankingRelevance ?? "Relevance",
     filterOpen: root.dataset.labelFilterOpen ?? "Show search filters",
     filterClose: root.dataset.labelFilterClose ?? "Hide search filters",
     tagCount: root.dataset.labelTagCount ?? "{tag}, {count} results",
@@ -149,9 +149,9 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
   const sortButton = requiredElement<HTMLButtonElement>(root, "[data-search-sort]");
   const sortLabel = requiredElement<HTMLElement>(root, "[data-search-sort-label]");
   const sortIcon = requiredElement<HTMLElement>(root, "[data-search-sort-icon]");
-  const priorityButton = requiredElement<HTMLButtonElement>(root, "[data-search-priority]");
-  const priorityLabel = requiredElement<HTMLElement>(root, "[data-search-priority-label]");
-  const priorityIcon = requiredElement<HTMLElement>(root, "[data-search-priority-icon]");
+  const rankingPriorityButton = requiredElement<HTMLButtonElement>(root, "[data-search-ranking-priority]");
+  const rankingPriorityLabel = requiredElement<HTMLElement>(root, "[data-search-ranking-priority-label]");
+  const rankingPriorityIcon = requiredElement<HTMLElement>(root, "[data-search-ranking-priority-icon]");
   const filterToggle = requiredElement<HTMLButtonElement>(root, "[data-search-filter-toggle]");
   const filterAside = requiredElement<HTMLElement>(root, "[data-search-filters] > aside");
   const filterLabel = requiredElement<HTMLElement>(root, "[data-search-filter-label]");
@@ -167,9 +167,10 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
   const tagTemplate = requiredElement<HTMLTemplateElement>(root, "[data-search-tag-template]");
   const optionTemplate = requiredElement<HTMLTemplateElement>(root, "[data-search-tag-option-template]");
   const media = window.matchMedia("(min-width: 48rem)");
+  const defaultRankingPriority = readSearchRankingPriority(root.dataset.defaultRankingPriority);
   let compactMode = !media.matches;
   let sort: SearchSort = "newest";
-  let priority: SearchPriority = "date";
+  let rankingPriority: SearchRankingPriority = defaultRankingPriority;
   let filterOpen = false;
   let tagMenuOpen = false;
   let inputTimer: ReturnType<typeof setTimeout> | undefined;
@@ -261,7 +262,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     queryInput.value = params.get("q") ?? "";
     tagInput.value = params.get("tag") ?? "";
     sort = readSearchSort(params.get("sort"));
-    priority = readSearchPriority(params.get("rank"));
+    rankingPriority = readSearchRankingPriority(params.get("rank"), defaultRankingPriority);
     updateTagSelection();
   };
 
@@ -273,7 +274,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     if (tagInput.value) url.searchParams.set("tag", tagInput.value);
     else url.searchParams.delete("tag");
     writeSearchSort(url, sort);
-    writeSearchPriority(url, priority);
+    writeSearchRankingPriority(url, rankingPriority, defaultRankingPriority);
     window.history.replaceState(null, "", url);
   };
 
@@ -286,13 +287,14 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     sortIcon.setAttribute("aria-label", newest ? labels.newest : labels.oldest);
   };
 
-  const updatePriorityButton = () => {
-    const useRelevance = priority === "relevance";
-    priorityLabel.textContent = useRelevance ? labels.priorityRelevance : labels.priorityDate;
-    priorityButton.setAttribute("aria-pressed", String(useRelevance));
-    priorityButton.setAttribute("aria-label", useRelevance ? labels.priorityRelevance : labels.priorityDate);
-    priorityIcon.setAttribute("data-priority", priority);
-    priorityIcon.setAttribute("aria-label", useRelevance ? labels.priorityRelevance : labels.priorityDate);
+  const updateRankingPriorityButton = () => {
+    const useRelevance = rankingPriority === "relevance";
+    const label = useRelevance ? labels.rankingRelevance : labels.rankingDate;
+    rankingPriorityLabel.textContent = label;
+    rankingPriorityButton.setAttribute("aria-pressed", String(useRelevance));
+    rankingPriorityButton.setAttribute("aria-label", label);
+    rankingPriorityIcon.setAttribute("data-ranking-priority", rankingPriority);
+    rankingPriorityIcon.setAttribute("aria-label", label);
   };
 
   const addTagOptions = (corpus: StoredSearchResult[]) => {
@@ -352,14 +354,14 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     const unfiltered = searchResultSets(index, query, lang);
     updateFacetCounts(unfiltered);
     const filtered = filterSearchResults(unfiltered, tagInput.value);
-    const effectivePriority = query ? priority : "date";
-    const ranked = rankSearchResults(filtered, { sort, priority: effectivePriority, indexOrder }).slice(0, maxResults);
+    const effectiveRankingPriority = query ? rankingPriority : "date";
+    const ranked = rankSearchResults(filtered, { sort, rankingPriority: effectiveRankingPriority, indexOrder }).slice(0, maxResults);
     const preciseCount = filtered.precise.length;
     const approximateCount = filtered.approximate.length;
     const totalCount = preciseCount + approximateCount;
     resultList.replaceChildren();
     updateSortButton();
-    updatePriorityButton();
+    updateRankingPriorityButton();
 
     if (totalCount === 0) {
       status.textContent = labels.empty;
@@ -452,7 +454,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
     });
     filterToggle.addEventListener("click", () => setFilterOpen(!filterOpen));
     sortButton.addEventListener("click", () => { sort = sort === "newest" ? "oldest" : "newest"; writeUrlState(); render(); });
-    priorityButton.addEventListener("click", () => { priority = priority === "date" ? "relevance" : "date"; writeUrlState(); render(); });
+    rankingPriorityButton.addEventListener("click", () => { rankingPriority = rankingPriority === "date" ? "relevance" : "date"; writeUrlState(); render(); });
     tagButton.addEventListener("click", () => setTagMenuOpen(!tagMenuOpen, true));
     tagButton.addEventListener("keydown", (event) => {
       if (!compact() || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;

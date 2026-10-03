@@ -1,6 +1,6 @@
 import MiniSearch, { type Options, type SearchOptions } from "minisearch";
 import { SITE } from "../config";
-import { type Lang } from "../i18n/ui";
+import type { Lang } from "@/i18n/ui";
 
 export type SearchDocumentKind = "post" | "moment";
 
