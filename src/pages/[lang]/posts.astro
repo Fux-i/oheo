@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Article from "@/components/posts/Article.astro";
+import PostListItem from "@/components/posts/PostListItem.astro";
 import { comparePosts } from "@/components/posts/post-parts";
 import { getT } from "@/i18n/ui";
 import { getCollection } from "@/content";
@@ -15,7 +15,7 @@ const posts = getCollection("posts", lang).sort(comparePosts);
 <Layout title={t("nav.posts") + t("site.title_suffix")} desc="">
   <container class="w-full relative">
     <main class:list={["main w-full px-4 overflow-x-clip"]}>
-      {posts.map((p) => <Article item={p} exclusive={false} />)}
+      {posts.map((p) => <PostListItem item={p} />)}
     </main>
   </container>
 </Layout>
