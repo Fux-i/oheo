@@ -25,5 +25,5 @@ const { lang } = getT(Astro.currentLocale);
   desc={frontmatter.desc ?? ""}
   backHref={getRelativeLocaleUrl(lang, "posts")}
 >
-  <Article item={item} exclusive={true} />
+  <Article item={item} />
 </Layout>

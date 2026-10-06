@@ -1,6 +1,5 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { Icon } from "astro-icon/components";
 import { type CollectionItem } from "@/content";
 import { SITE } from "@/config";
 import { getT } from "@/i18n/ui";
@@ -9,15 +8,13 @@ import Outline from "../utils/Outline.astro";
 
 interface Props {
   item: CollectionItem;
-  exclusive: boolean;
 }
 
-const { item, exclusive } = Astro.props;
+const { item } = Astro.props;
 const { Content, frontmatter } = item;
 const { lang, t } = getT(Astro.currentLocale);
 
-const page_width = "max-w-" + SITE.page_width;
-
+const pageWidth = "max-w-" + SITE.page_width;
 const publishedAt = frontmatter["published-at"];
 const updatedAt = frontmatter["updated-at"];
 const publishedAtLabel = formatPostDate(publishedAt);
@@ -26,54 +23,26 @@ const tags: string[] = frontmatter.tags ?? [];
 const hasMeta = publishedAt || updatedAt || tags.length > 0;
 const title = frontmatter.title ?? item.slug;
 const searchUrl = getRelativeLocaleUrl(lang, "search");
-const searchAttributes = exclusive
-  ? {
-      "data-search-document": "",
-      "data-search-id": `post:${lang}:${item.slug}`,
-      "data-search-kind": "post",
-      "data-search-lang": lang,
-      "data-search-url": Astro.url.pathname,
-      "data-search-root-anchor": item.slug,
-      "data-search-title": title,
-      "data-search-display-title": title,
-      "data-search-description": frontmatter.desc ?? "",
-      "data-search-date": publishedAt ?? "",
-      "data-search-tags": JSON.stringify(tags),
-    }
-  : {};
+const searchAttributes = {
+  "data-search-document": "",
+  "data-search-id": `post:${lang}:${item.slug}`,
+  "data-search-kind": "post",
+  "data-search-lang": lang,
+  "data-search-url": Astro.url.pathname,
+  "data-search-root-anchor": item.slug,
+  "data-search-title": title,
+  "data-search-display-title": title,
+  "data-search-description": frontmatter.desc ?? "",
+  "data-search-date": publishedAt ?? "",
+  "data-search-tags": JSON.stringify(tags),
+};
 ---
 
-<div
-  {...searchAttributes}
-  class:list={[
-    page_width,
-    "article-wrapper relative mx-auto shadow",
-    !exclusive && "collapsible my-4",
-  ]}
->
-  <article
-    data-search-body={exclusive ? "" : undefined}
-    class:list={[
-      "article bg-(--article-bg) py-4",
-      exclusive ? "px-8" : "px-4 sm:px-8",
-      !exclusive &&
-        "h-64 overflow-hidden transition-[height] duration-300 sm:h-48",
-    ]}
-  >
-    {
-      exclusive ? (
-        <h1 id={item.slug} data-search-exclude data-search-highlight-title>
-          {title}
-        </h1>
-      ) : (
-        <a
-          href={item.slug}
-          class:list={"title-a text-xl transition-[font-size] duration-300"}
-        >
-          <b>{title}</b>
-        </a>
-      )
-    }
+<div {...searchAttributes} class:list={[pageWidth, "article-wrapper relative mx-auto shadow"]}>
+  <article data-search-body class="article bg-(--article-bg) px-4 py-4 sm:px-8">
+    <h1 id={item.slug} data-search-exclude data-search-highlight-title>
+      {title}
+    </h1>
     {
       hasMeta && (
         <post-meta
@@ -84,13 +53,13 @@ const searchAttributes = exclusive
             <span class="min-w-0">
               {publishedAt && (
                 <span>
-                  {t("article.published_at")}{" "}
+                  {t("article.published_at")} {" "}
                   <time datetime={publishedAt}>{publishedAtLabel}</time>
                 </span>
               )}
               {updatedAt && (
                 <span>
-                  {t("article.updated_at")}{" "}
+                  {t("article.updated_at")} {" "}
                   <time datetime={updatedAt}>{updatedAtLabel}</time>
                 </span>
               )}
@@ -113,59 +82,14 @@ const searchAttributes = exclusive
     }
     <Content />
   </article>
-  <sticky-rail
-    class:list={[
-      "sticky-rail pointer-events-none absolute inset-y-0 -right-4 z-20 w-0 transition-opacity duration-300",
-      exclusive ? "opacity-100" : "invisible opacity-0",
-    ]}
-  >
+  <sticky-rail class="sticky-rail pointer-events-none absolute inset-y-0 -right-4 z-20 w-0">
     <div class="sticky top-20 flex gap-2">
       <Outline toc={item.headings} />
-      {
-        !exclusive && (
-          <button
-            type="button"
-            title={t("article.collapse")}
-            aria-label={t("article.collapse")}
-            class="absolute left-13 collapse-btn grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-(--article-bg) shadow hover:brightness-90"
-          >
-            <Icon name="tabler:chevrons-up" class="size-5" />
-          </button>
-        )
-      }
     </div>
   </sticky-rail>
-  {
-    !exclusive && (
-      <div class="fade-mask absolute inset-x-0 bottom-0 h-35 cursor-pointer transition-opacity duration-300">
-        <p class="text-blue-500 text-center w-full absolute bottom-2">
-          {t("article.expand")}
-        </p>
-      </div>
-    )
-  }
 </div>
 
 <style>
-  .fade-mask {
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--article-bg) 0%, transparent),
-      var(--article-bg)
-    );
-  }
-  .collapsible.expanded > article {
-    height: auto;
-    height: calc-size(auto, size);
-  }
-  .expanded .fade-mask {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .expanded .sticky-rail {
-    opacity: 1;
-    visibility: visible;
-  }
   :global(html),
   :global(body) {
     overflow-x: clip;
@@ -185,37 +109,12 @@ const searchAttributes = exclusive
   .outline-inset .outline-toggle {
     margin-inline-start: auto;
   }
-  .outline-inset .collapse-btn {
-    right: 3.25rem;
-    left: auto;
-  }
   .sticky-rail :global(.outline-toggle),
-  .sticky-rail :global(.outline-nav),
-  .sticky-rail .collapse-btn {
+  .sticky-rail :global(.outline-nav) {
     pointer-events: auto;
-  }
-  .expanded {
-    a.title-a {
-      font-size: 2rem;
-    }
   }
 </style>
 
 <script>
   import "./search-highlight";
-
-  document.querySelectorAll<HTMLButtonElement>(".fade-mask").forEach((mask) => {
-    mask.addEventListener("click", () => {
-      mask.closest(".article-wrapper")?.classList.add("expanded");
-      window.dispatchEvent(new CustomEvent("article-layout-change"));
-    });
-  });
-  document
-    .querySelectorAll<HTMLButtonElement>(".collapse-btn")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        btn.closest(".article-wrapper")?.classList.remove("expanded");
-        window.dispatchEvent(new CustomEvent("article-layout-change"));
-      });
-    });
 </script>

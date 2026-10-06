@@ -103,9 +103,7 @@ function getPanelOverflow(entry: OutlineEntry) {
 function measureRailControlRight(entry: OutlineEntry) {
   const wasEdge = entry.wrapper.classList.contains("outline-edge");
   const wasInset = entry.wrapper.classList.contains("outline-inset");
-  const target =
-    entry.wrapper.querySelector<HTMLElement>(".collapse-btn") ??
-    entry.box.querySelector<HTMLElement>(".outline-toggle");
+  const target = entry.box.querySelector<HTMLElement>(".outline-toggle");
 
   entry.wrapper.classList.remove("outline-edge", "outline-inset");
   const right = target?.getBoundingClientRect().right ?? 0;
@@ -285,7 +283,6 @@ export function initOutline() {
 
   window.addEventListener("scroll", scheduleUpdate, { passive: true });
   window.addEventListener("resize", scheduleDebouncedRefresh, { passive: true });
-  window.addEventListener("article-layout-change", scheduleDebouncedRefresh);
   window.addEventListener("load", scheduleRefresh, { once: true });
 
   if ("ResizeObserver" in window) {
