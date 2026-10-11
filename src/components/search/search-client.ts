@@ -123,6 +123,21 @@ function buildResultUrl(
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+function navigateFromCard(event: MouseEvent, url: string): void {
+  const target = event.target;
+  if (target instanceof Element && target.closest("a, button, input, select, textarea")) return;
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    (window.getSelection()?.isCollapsed === false)
+  ) return;
+  window.location.href = url;
+}
+
 function updateOptionTabStops(options: HTMLButtonElement[], selected: string): void {
   let active = false;
   for (const option of options) {
@@ -329,6 +344,7 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
   const renderSnippet = (item: HTMLElement, result: StoredSearchResult, snippet: SearchSnippet, terms: string[]) => {
     const node = snippetTemplate.content.firstElementChild?.cloneNode(true) as HTMLElement | undefined;
     if (!node) return;
+    const snippetLink = requiredElement<HTMLAnchorElement>(node, "[data-result-snippet-link]");
     const link = requiredElement<HTMLAnchorElement>(node, "[data-result-section-link]");
     const linkLabel = requiredElement<HTMLElement>(node, "[data-result-section-label]");
     const codeIcon = requiredElement<HTMLElement>(node, "[data-result-code-icon]");
@@ -338,10 +354,17 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
       : snippet.anchorLabel
         ? fillLabel(labels.sectionMatch, { label: snippet.anchorLabel })
         : "";
+    const snippetUrl = buildResultUrl(result, terms, snippet.anchorId);
+    snippetLink.href = snippetUrl;
+    snippetLink.setAttribute("aria-label", title || result.displayTitle);
+    node.addEventListener("click", (event) => {
+      event.stopPropagation();
+      navigateFromCard(event, snippetUrl);
+    });
     if (title) {
       linkLabel.textContent = title;
       codeIcon.hidden = snippet.field !== "code";
-      link.href = buildResultUrl(result, terms, snippet.anchorId);
+      link.href = snippetUrl;
     } else {
       link.hidden = true;
     }
@@ -390,8 +413,13 @@ async function initializeSearch(root: HTMLElement): Promise<void> {
       if (!item) continue;
       const terms = query ? getHighlightTerms(result, query, lang) : [];
       const snippets = getSnippets(result, terms, lang, undefined, maxSnippets);
-      const title = requiredElement<HTMLAnchorElement>(item, "[data-result-title]");
-      title.href = buildResultUrl(result, terms, snippets.find((snippet) => snippet.anchorId)?.anchorId ?? "");
+      const resultUrl = buildResultUrl(result, terms, snippets.find((snippet) => snippet.anchorId)?.anchorId ?? "");
+      const cardLink = requiredElement<HTMLAnchorElement>(item, "[data-result-card-link]");
+      cardLink.href = resultUrl;
+      cardLink.setAttribute("aria-label", result.displayTitle);
+      requiredElement<HTMLElement>(item, "[data-result-card-surface]")
+        .addEventListener("click", (event) => navigateFromCard(event, resultUrl));
+      const title = requiredElement<HTMLElement>(item, "[data-result-title]");
       appendHighlightedText(title, result.displayTitle, result.kind === "post" ? terms : []);
       requiredElement<HTMLElement>(item, "[data-result-kind]").textContent = result.kind === "post" ? labels.post : labels.moment;
       const date = requiredElement<HTMLTimeElement>(item, "[data-result-date]");
