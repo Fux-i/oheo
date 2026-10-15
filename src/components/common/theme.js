@@ -3,12 +3,15 @@
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   const preferences = ["system", "light", "dark"];
 
-  const getPreference = () => {
+  let preference = "system";
+  try {
     const stored = localStorage.getItem("theme");
-    return stored === "light" || stored === "dark" ? stored : "system";
-  };
+    if (stored === "light" || stored === "dark") preference = stored;
+  } catch {
+    // Storage may be unavailable. Keep the system preference.
+  }
 
-  const apply = (preference) => {
+  const apply = () => {
     const isDark =
       preference === "dark" || (preference === "system" && media.matches);
     root.dataset.theme = isDark ? "dark" : "light";
@@ -19,16 +22,20 @@
     if (!(event.target instanceof Element)) return;
     if (!event.target.closest("[data-theme-toggle]")) return;
 
-    const next =
-      preferences[(preferences.indexOf(getPreference()) + 1) % preferences.length];
-    if (next === "system") localStorage.removeItem("theme");
-    else localStorage.setItem("theme", next);
-    apply(next);
+    preference =
+      preferences[(preferences.indexOf(preference) + 1) % preferences.length];
+    apply();
+    try {
+      if (preference === "system") localStorage.removeItem("theme");
+      else localStorage.setItem("theme", preference);
+    } catch {
+      // Keep the active preference when persistence fails.
+    }
   });
 
   media.addEventListener("change", () => {
-    if (getPreference() === "system") apply("system");
+    if (preference === "system") apply();
   });
 
-  apply(getPreference());
+  apply();
 })();
