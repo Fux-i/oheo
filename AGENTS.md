@@ -58,7 +58,7 @@ src/styles/global.css        Tailwind entry point, global imports, theme variabl
 src/styles/article.css       Markdown typography under `.article`
 ```
 
-Use the `@/*` alias for imports from `src/*`.
+Use the `@/*` alias for imports from `src/*`. Modules loaded by `astro.config.mjs` use relative imports because aliases are unavailable while Astro loads its configuration.
 
 ## Configuration
 
@@ -168,7 +168,7 @@ Runtime helpers:
 
 Slug priority is `frontmatter.slug` followed by the path-derived fallback. The fallback removes the first source directory and all filename suffixes, so `blog/a/b/c.en.md` becomes `a/b/c`. Localized versions of a post should declare the same slug.
 
-Slug fallback logic also exists in `src/markdown/post-slug.ts` because Markdown transforms run separately from `src/content.ts`. Keep these two implementations behaviorally synchronized if slug derivation changes.
+`src/content-slug.ts` owns explicit slug precedence and path-derived fallback for both `src/content.ts` and the Markdown adapter in `src/markdown/post-slug.ts`. Keep slug policy in this shared module.
 
 ## Frontmatter Contracts
 
