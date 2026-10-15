@@ -268,7 +268,7 @@ Keep Astro responsible for rendering and use small TypeScript/DOM scripts for in
 - Theme state is stored as `light`, `dark`, or system preference and rendered through `data-theme` on `<html>`.
 - `ImageViewer.astro` exposes options through data attributes; `image-viewer.ts` owns PhotoSwipe enhancement.
 - `SearchPanel.astro` exposes localized labels and configuration through data attributes; `search-client.ts` owns its MiniSearch and Tag-menu behavior.
-- `Article.astro` emits `article-layout-change` after expand/collapse; the outline client listens for it to recompute geometry.
+- `Outline.astro` owns its rail, placement styles, and `contentId` link to the article. `outline-client.ts` keeps placement state on the rail and measures rendered geometry; hosts provide a positioned parent.
 - `dismissible.ts` centralizes outside-pointer and focus-loss dismissal behavior.
 - `Starfield.astro` respects `prefers-reduced-motion`, caps device-pixel ratio work, and reacts to theme/resize changes.
 
