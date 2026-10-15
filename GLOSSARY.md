@@ -9,3 +9,6 @@ A content item's locale-independent identity, given explicitly or derived from i
 
 **Outline**:
 A post's heading navigation, positioned beside or inside the reading area according to available space.
+
+**Theme preference**:
+A reader's choice of light, dark, or following the system. The effective theme is light or dark after that preference is resolved.

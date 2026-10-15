@@ -263,9 +263,9 @@ Search UI labels belong in both dictionaries in `src/i18n/ui.ts`. `SearchPanel.a
 
 Keep Astro responsible for rendering and use small TypeScript/DOM scripts for interaction. There is no client UI framework.
 
-- `Header.astro` owns locale navigation, theme preference, responsive menu behavior, and social links.
-- `ThemeScript.astro` must stay in `<head>` before paint to avoid a theme flash.
-- Theme state is stored as `light`, `dark`, or system preference and rendered through `data-theme` on `<html>`.
+- `Header.astro` owns locale navigation, responsive menu behavior, social links, and theme toggle markup.
+- `ThemeScript.astro` inlines `theme.js` in `<head>` before paint. Keep this script valid plain JavaScript: it owns theme preference normalization, switching, and system-theme changes.
+- Theme preference is stored as `light` or `dark`; absent or unsupported values follow the system. `<html>` exposes the preference through `data-theme-preference` and the effective theme through `data-theme`.
 - `ImageViewer.astro` exposes options through data attributes; `image-viewer.ts` owns PhotoSwipe enhancement.
 - `SearchPanel.astro` exposes localized labels and configuration through data attributes; `search-client.ts` owns its MiniSearch and Tag-menu behavior.
 - `Outline.astro` owns its rail, placement styles, and `contentId` link to the article. `outline-client.ts` keeps placement state on the rail and measures rendered geometry; hosts provide a positioned parent.
