@@ -85,7 +85,7 @@ const iconBtn =
         type="button"
         title={t("btn.theme")}
         class:list={[iconBtn, "theme-toggle"]}
-        data-pref="system"
+        data-theme-toggle
       >
         <Icon name="tabler:sun-high" class="size-5" data-theme-icon="light" />
         <Icon name="tabler:moon" class="size-5" data-theme-icon="dark" />
@@ -162,7 +162,7 @@ const iconBtn =
           type="button"
           title={t("btn.theme")}
           class:list={[iconBtn, "theme-toggle size-10"]}
-          data-pref="system"
+          data-theme-toggle
         >
           <Icon name="tabler:sun-high" class="size-7" data-theme-icon="light" />
           <Icon name="tabler:moon" class="size-7" data-theme-icon="dark" />
@@ -194,37 +194,6 @@ const iconBtn =
 
 <script>
   import { dismissWhenInactive } from "@/components/utils/dismissible";
-
-  type Theme = "system" | "light" | "dark";
-  const KEY = "theme";
-  const order: Theme[] = ["system", "light", "dark"];
-
-  const mql = window.matchMedia("(prefers-color-scheme: dark)");
-
-  const getTheme = (): Theme =>
-    (localStorage.getItem(KEY) as Theme) || "system";
-
-  const apply = (t: Theme) => {
-    const isDark = t === "dark" || (t === "system" && mql.matches);
-    const root = document.documentElement;
-    root.dataset.theme = isDark ? "dark" : "light";
-    btns.forEach((b) => ((b as HTMLElement).dataset.pref = t));
-  };
-
-  const btns = document.querySelectorAll(".theme-toggle");
-  btns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const next = order[(order.indexOf(getTheme()) + 1) % order.length];
-      if (next === "system") localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, next);
-      apply(next);
-    });
-  });
-  mql.addEventListener("change", () => {
-    if (getTheme() === "system") apply("system");
-  });
-
-  apply(getTheme());
 
   // responsive
   const container = document.getElementById("header-container")!;
@@ -298,9 +267,9 @@ const iconBtn =
     rotate: -90deg;
     transition: all 0.3s ease;
   }
-  .theme-toggle[data-pref="light"] [data-theme-icon="light"],
-  .theme-toggle[data-pref="dark"] [data-theme-icon="dark"],
-  .theme-toggle[data-pref="system"] [data-theme-icon="system"] {
+  :global(html[data-theme-preference="light"]) .theme-toggle [data-theme-icon="light"],
+  :global(html[data-theme-preference="dark"]) .theme-toggle [data-theme-icon="dark"],
+  :global(html[data-theme-preference="system"]) .theme-toggle [data-theme-icon="system"] {
     scale: 1;
     rotate: 0deg;
   }
