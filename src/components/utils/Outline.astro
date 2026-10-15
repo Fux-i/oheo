@@ -2,73 +2,111 @@
 import { Icon } from "astro-icon/components";
 import { getT } from "@/i18n/ui";
 import type { MarkdownHeading } from "@/content";
-import { buildOutlineItems } from "./outline-items";
+import { buildOutlineItems } from "@/components/utils/outline-items";
 
 const { t } = getT(Astro.currentLocale);
 interface Props {
   toc: MarkdownHeading[];
+  contentId: string;
 }
 
-const { toc } = Astro.props;
+const { toc, contentId } = Astro.props;
 const items = buildOutlineItems(toc);
 ---
 
-<outline-box class="outline-box relative block shrink-0 open">
-  <button
-    type="button"
-    title={t("btn.outline")}
-    aria-expanded="true"
-    class="outline-toggle grid place-items-center size-10 rounded-full bg-(--article-bg) shadow cursor-pointer hover:brightness-90"
-  >
-    <Icon name="tabler:list-tree" class="size-4" />
-  </button>
+<outline-rail data-content-id={contentId}>
+  <div class="outline-sticky">
+    <outline-box class="outline-box relative block shrink-0 open">
+      <button
+        type="button"
+        title={t("btn.outline")}
+        aria-expanded="true"
+        class="outline-toggle grid place-items-center size-10 rounded-full bg-(--article-bg) shadow cursor-pointer hover:brightness-90"
+      >
+        <Icon name="tabler:list-tree" class="size-4" />
+      </button>
 
-  {
-    items.length > 0 && (
-      <nav class="outline-nav relative mt-2 hidden p-3">
-        <ol class="outline-list relative space-y-1.5 text-sm">
-          {items.map((h) => (
-            <li
-              class="outline-item relative"
-              data-anchor={h.slug}
-              style={`--dot-size:${h.dotSize};--dot-x:${h.dotX};padding-inline-start:${h.paddingStart}`}
-            >
-              {h.connector && (
-                <span
-                  class:list={[
-                    "outline-connector",
-                    h.connector.sameDepth ? "is-straight" : "is-curved",
-                  ]}
-                  style={`--connector-left:${h.connector.left};--connector-width:${h.connector.width};--connector-height:${h.connector.height}`}
-                  aria-hidden="true"
+      {
+        items.length > 0 && (
+          <nav class="outline-nav relative mt-2 hidden p-3">
+            <ol class="outline-list relative space-y-1.5 text-sm">
+              {items.map((h) => (
+                <li
+                  class="outline-item relative"
+                  data-anchor={h.slug}
+                  style={`--dot-size:${h.dotSize};--dot-x:${h.dotX};padding-inline-start:${h.paddingStart}`}
                 >
-                  {!h.connector.sameDepth && (
-                    <svg
-                      viewBox={h.connector.viewBox}
-                      preserveAspectRatio="none"
+                  {h.connector && (
+                    <span
+                      class:list={[
+                        "outline-connector",
+                        h.connector.sameDepth ? "is-straight" : "is-curved",
+                      ]}
+                      style={`--connector-left:${h.connector.left};--connector-width:${h.connector.width};--connector-height:${h.connector.height}`}
+                      aria-hidden="true"
                     >
-                      <path d={h.connector.path} />
-                    </svg>
+                      {!h.connector.sameDepth && (
+                        <svg
+                          viewBox={h.connector.viewBox}
+                          preserveAspectRatio="none"
+                        >
+                          <path d={h.connector.path} />
+                        </svg>
+                      )}
+                    </span>
                   )}
-                </span>
-              )}
-              <a
-                href={`#${h.slug}`}
-                class="outline-link block truncate opacity-70 hover:opacity-100"
-              >
-                {h.text}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </nav>
-    )
-  }
-</outline-box>
+                  <a
+                    href={`#${h.slug}`}
+                    class="outline-link block truncate opacity-70 hover:opacity-100"
+                  >
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+    </outline-box>
+  </div>
+</outline-rail>
 
 <style>
+  outline-rail {
+    --outline-margin: 1rem;
+    --outline-panel-width: min(18rem, calc(100vw - 2 * var(--outline-margin)));
+    position: absolute;
+    inset: 0 calc(-1 * var(--outline-margin)) 0 auto;
+    z-index: 20;
+    width: 0;
+    pointer-events: none;
+
+    &[data-placement="inset"] {
+      inset: var(--outline-margin) var(--outline-margin) 0 auto;
+      width: min(18rem, calc(100% - 2 * var(--outline-margin)));
+
+      .outline-sticky,
+      .outline-box,
+      .outline-nav {
+        width: 100%;
+        max-width: none;
+      }
+
+      .outline-toggle {
+        margin-inline-start: auto;
+      }
+    }
+  }
+  .outline-sticky {
+    position: sticky;
+    top: 5rem;
+    display: flex;
+  }
+  .outline-toggle,
+  .outline-nav {
+    pointer-events: auto;
+  }
   .outline-box {
-    --outline-panel-width: min(18rem, calc(100vw - 2rem));
     width: max-content;
     max-width: var(--outline-panel-width);
   }
@@ -153,31 +191,26 @@ const items = buildOutlineItems(toc);
   .outline-box.open .outline-nav {
     display: block;
   }
-  :global(.outline-edge) .outline-box.is-peeking .outline-nav,
-  :global(.outline-inset) .outline-box.open .outline-nav {
+  outline-rail[data-placement="edge"] .outline-box.is-peeking .outline-nav,
+  outline-rail[data-placement="inset"] .outline-box.open .outline-nav {
     border-color: color-mix(in srgb, currentColor 12%, transparent);
     background: color-mix(in srgb, var(--article-bg) 82%, transparent);
     box-shadow: 0 0.75rem 2rem color-mix(in srgb, black 14%, transparent);
     backdrop-filter: blur(0.75rem);
   }
-  :global(.outline-edge) .outline-box.is-peeking .outline-nav {
+  outline-rail[data-placement="edge"] .outline-box.is-peeking .outline-nav {
     transform: translateX(var(--outline-shift, 0px));
   }
-  :global(.outline-inset) .outline-box {
-    width: 100%;
-    max-width: none;
-  }
-  :global(.outline-inset) .outline-toggle {
-    margin-inline-start: auto;
-  }
-  :global(.outline-inset) .outline-nav {
-    width: 100%;
-    max-width: none;
+
+  @media (prefers-reduced-motion: reduce) {
+    .outline-nav {
+      transition: none;
+    }
   }
 </style>
 
 <script>
-  import { initOutline } from "./outline-client";
+  import { initOutline } from "@/components/utils/outline-client";
 
   initOutline();
 </script>

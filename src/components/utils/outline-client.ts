@@ -1,10 +1,9 @@
-import { dismissWhenInactive } from "./dismissible";
+import { dismissWhenInactive } from "@/components/utils/dismissible";
 
 const peekTimers = new WeakMap<HTMLElement, number>();
+const initializedRails = new WeakSet<HTMLElement>();
 const PEEK_CLOSE_DELAY = 220;
 const REFRESH_DEBOUNCE_DELAY = 120;
-const EDGE_MARGIN = 16;
-const RAIL_OFFSET = 16;
 
 type HeadingEntry = {
   top: number;
@@ -14,7 +13,7 @@ type HeadingEntry = {
 type OutlinePlacement = "wide" | "edge" | "inset";
 
 type OutlineEntry = {
-  wrapper: HTMLElement;
+  rail: HTMLElement;
   box: HTMLElement;
   article: HTMLElement;
   headings: HTMLElement[];
@@ -40,13 +39,6 @@ function setOpen(box: HTMLElement, open: boolean) {
   box
     .querySelector<HTMLElement>(".outline-toggle")
     ?.setAttribute("aria-expanded", String(open));
-}
-
-function isInset(box: HTMLElement) {
-  return (
-    box.closest<HTMLElement>(".article-wrapper")?.dataset.outlinePlacement ===
-    "inset"
-  );
 }
 
 function closePeekLater(box: HTMLElement) {
@@ -83,58 +75,39 @@ function withVisibleNav<T>(box: HTMLElement, callback: (nav: HTMLElement) => T) 
   return result;
 }
 
-function getPanelWidth(box: HTMLElement) {
-  const navWidth =
-    withVisibleNav(box, (nav) => nav.getBoundingClientRect().width) ?? 0;
-  const toggle = box.querySelector<HTMLElement>(".outline-toggle");
-  const rawWidth = Math.max(navWidth, toggle?.offsetWidth ?? 0);
-
-  return Math.min(rawWidth, window.innerWidth - EDGE_MARGIN * 2);
-}
-
-function getPanelOverflow(entry: OutlineEntry) {
-  const navRight =
-    withVisibleNav(entry.box, (nav) => nav.getBoundingClientRect().right) ??
-    entry.box.getBoundingClientRect().right;
-
-  return navRight + EDGE_MARGIN - window.innerWidth;
-}
-
-function measureRailControlRight(entry: OutlineEntry) {
-  const wasEdge = entry.wrapper.classList.contains("outline-edge");
-  const wasInset = entry.wrapper.classList.contains("outline-inset");
+function measurePlacement(entry: OutlineEntry) {
+  const previous = entry.rail.dataset.placement;
   const target = entry.box.querySelector<HTMLElement>(".outline-toggle");
 
-  entry.wrapper.classList.remove("outline-edge", "outline-inset");
-  const right = target?.getBoundingClientRect().right ?? 0;
-  entry.wrapper.classList.toggle("outline-edge", wasEdge);
-  entry.wrapper.classList.toggle("outline-inset", wasInset);
+  delete entry.rail.dataset.placement;
+  const margin = Math.abs(parseFloat(getComputedStyle(entry.rail).right));
+  const controlRight = target?.getBoundingClientRect().right ?? 0;
+  const panelRight =
+    withVisibleNav(entry.box, (nav) => nav.getBoundingClientRect().right) ??
+    controlRight;
+  if (previous) entry.rail.dataset.placement = previous;
 
-  return right;
+  return { margin, controlRight, panelRight };
 }
 
 function setPlacement(entry: OutlineEntry) {
-  const rect = entry.wrapper.getBoundingClientRect();
-  const rightSpace = window.innerWidth - rect.right;
-  const panelWidth = getPanelWidth(entry.box);
-  const neededRightSpace = panelWidth - RAIL_OFFSET + EDGE_MARGIN;
+  const { margin, controlRight, panelRight } = measurePlacement(entry);
   const placement: OutlinePlacement =
-    measureRailControlRight(entry) >= window.innerWidth
+    controlRight >= window.innerWidth
       ? "inset"
-      : rightSpace < neededRightSpace
+      : panelRight + margin > window.innerWidth
         ? "edge"
         : "wide";
-  const previous = entry.wrapper.dataset.outlinePlacement as
-    | OutlinePlacement
-    | undefined;
+  const previous = entry.rail.dataset.placement;
 
-  entry.wrapper.classList.toggle("outline-edge", placement === "edge");
-  entry.wrapper.classList.toggle("outline-inset", placement === "inset");
-  entry.wrapper.dataset.outlinePlacement = placement;
+  entry.rail.dataset.placement = placement;
   if (placement !== "edge") entry.box.classList.remove("is-peeking");
 
-  const overflow = getPanelOverflow(entry);
-  entry.wrapper.style.setProperty(
+  const navRight =
+    withVisibleNav(entry.box, (nav) => nav.getBoundingClientRect().right) ??
+    controlRight;
+  const overflow = navRight + margin - window.innerWidth;
+  entry.rail.style.setProperty(
     "--outline-shift",
     `${-Math.max(0, Math.ceil(overflow))}px`,
   );
@@ -160,7 +133,7 @@ function refresh(entry: OutlineEntry) {
     .map((heading) => ({
       top: heading.getBoundingClientRect().top + window.scrollY,
       item:
-        entry.wrapper.querySelector<HTMLElement>(
+        entry.box.querySelector<HTMLElement>(
           `.outline-item[data-anchor="${CSS.escape(heading.id)}"]`,
         ) ?? null,
     }))
@@ -195,19 +168,17 @@ function findCurrent(entries: HeadingEntry[], targetTop: number) {
 export function initOutline() {
   const outlines: OutlineEntry[] = [];
 
-  document
-    .querySelectorAll<HTMLButtonElement>(".outline-toggle")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const box = btn.closest<HTMLElement>(".outline-box");
-        if (!box) return;
+  document.querySelectorAll<HTMLElement>("outline-rail").forEach((rail) => {
+    if (initializedRails.has(rail)) return;
+    const box = rail.querySelector<HTMLElement>(".outline-box");
+    const article = document.getElementById(rail.dataset.contentId ?? "");
+    if (!box || !article) return;
+    initializedRails.add(rail);
 
-        setOpen(box, !box.classList.contains("open"));
-        delete box.dataset.closedByPlacement;
-      });
+    box.querySelector(".outline-toggle")?.addEventListener("click", () => {
+      setOpen(box, !box.classList.contains("open"));
+      delete box.dataset.closedByPlacement;
     });
-
-  document.querySelectorAll<HTMLElement>(".outline-box").forEach((box) => {
     setOpen(box, box.classList.contains("open"));
     box.addEventListener("pointerenter", () => openPeek(box));
     box.addEventListener("pointerleave", () => closePeekLater(box));
@@ -217,22 +188,16 @@ export function initOutline() {
       root: box,
       isOpen: () => box.classList.contains("open"),
       close: () => setOpen(box, false),
-      isEnabled: () => isInset(box),
+      isEnabled: () => rail.dataset.placement === "inset",
     });
-
-    const wrapper = box.closest<HTMLElement>(".article-wrapper");
-    const article = wrapper?.querySelector(".article");
-    if (!wrapper || !(article instanceof HTMLElement)) return;
 
     const headings = Array.from(
       article.querySelectorAll<HTMLElement>(
         "h2[id], h3[id], h4[id], h5[id], h6[id]",
       ),
     );
-    if (!headings.length) return;
-
     const entry: OutlineEntry = {
-      wrapper,
+      rail,
       box,
       article,
       headings,
