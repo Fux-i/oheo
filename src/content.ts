@@ -1,5 +1,6 @@
 import { type Lang } from "@/i18n/ui";
-import { CONTENT_PREFIX, DATA_BASE } from "./content-paths";
+import { DATA_BASE } from "@/content-paths";
+import { getContentSlug } from "@/content-slug";
 
 export { CONTENT_PREFIX, DATA_BASE } from "./content-paths";
 
@@ -97,23 +98,6 @@ function resolveSourceString(
   return entry.source[lang] ?? null;
 }
 
-function fallbackSlug(path: string): string {
-  const contentPath = path.startsWith(CONTENT_PREFIX)
-    ? path.slice(CONTENT_PREFIX.length)
-    : path;
-  // strip first segment (source dir) and all trailing .xxx suffixes
-  // e.g. "blog/a/b/c.en.md" → "a/b/c"
-  const noSourceDir = contentPath.includes("/")
-    ? contentPath.slice(contentPath.indexOf("/") + 1)
-    : contentPath;
-  const base = noSourceDir.split("/").pop()!;
-  const stem = base.split(".")[0];
-  const dir = noSourceDir.includes("/")
-    ? noSourceDir.slice(0, noSourceDir.lastIndexOf("/"))
-    : "";
-  return dir ? `${dir}/${stem}` : stem;
-}
-
 function normalizeFrontmatter(
   pageKey: PageKey,
   frontmatter: Record<string, any> = {},
@@ -167,7 +151,7 @@ export function getCollection(
       const frontmatter = normalizeFrontmatter(pageKey, e.mod.frontmatter);
 
       return {
-        slug: frontmatter.slug ?? fallbackSlug(e.path),
+        slug: getContentSlug(e.path, frontmatter.slug),
         frontmatter,
         Content: e.mod.Content,
         headings: e.mod.getHeadings?.() ?? [],
